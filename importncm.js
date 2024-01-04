@@ -1,44 +1,76 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const mysql = require('mysql');
 
-// Conexão com o banco de dados
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '123456',
-    database: 'db_ncm'
-});
+// Função para conectar ao banco de dados
+const connectDB = () => {
+    return new Promise((resolve, reject) => {
+        const db = mysql.createConnection({
+            host: 'localhost',
+            user: 'root',
+            password: '123456',
+            database: 'db_ncm'
+        });
 
-db.connect(err => {
-    if (err) throw err;
-    console.log("Conectado ao banco de dados!");
-});
+        db.connect(err => {
+            if (err) {
+                reject(err);
+            } else {
+                console.log("Conectado ao banco de dados!");
+                resolve(db);
+            }
+        });
+    });
+};
 
 // Função para inserir os dados no banco
-function inserirProduto(codigo, ncm) {
-    // Certifique-se de que o NCM está definido e remova os pontos
-    const ncmSemPontos = ncm ? ncm.replace(/\./g, '') : '';
+const inserirProduto = (db, codigo, ncm) => {
+    return new Promise((resolve, reject) => {
+        // Certifique-se de que o NCM está definido e remova os pontos
+        const ncmSemPontos = ncm ? ncm.replace(/\./g, '') : '';
 
-    db.query('SELECT * FROM tec_produto WHERE codigo = ?', [codigo], (err, result) => {
-        if (err) throw err;
-        if (result.length === 0) {
-            const sql = 'INSERT INTO tec_produto (codigo, ncm) VALUES (?, ?)';
-            db.query(sql, [codigo, ncmSemPontos], (err) => {
-                if (err) throw err;
-                console.log(`Produto com código ${codigo} inserido com sucesso!`);
-            });
-        } else {
-            console.log(`Produto com código ${codigo} já existe no banco de dados.`);
-        }
+        db.query('SELECT * FROM tec_produto WHERE codigo = ?', [codigo], (err, result) => {
+            if (err) {
+                reject(err);
+            }
+
+            if (result.length === 0) {
+                const sql = 'INSERT INTO tec_produto (codigo, ncm) VALUES (?, ?)';
+                db.query(sql, [codigo, ncmSemPontos], (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        console.log(`Produto com código ${codigo} inserido com sucesso!`);
+                        resolve();
+                    }
+                });
+            } else {
+                console.log(`Produto com código ${codigo} já existe no banco de dados.p`);
+                resolve();
+            }
+        });
     });
-}
+};
 
-// Leitura do arquivo txt
-fs.readFile('E:\\WkRadar\\BI\\Registros\\tecwinncm.txt', 'utf8', (err, data) => {
-    if (err) throw err;
-    const linhas = data.split('\n');
-    for (let linha of linhas) {
-        const [codigo, ncm] = linha.split('|');
-        inserirProduto(codigo, ncm);
+// Função para ler o arquivo txt
+const lerArquivo = async () => {
+    try {
+        const data = await fs.readFile('C://Users//Felipe Silva//Desktop//code//tecwin//tecwinncm.txt', 'utf8');
+        const linhas = data.split('\n');
+        const db = await connectDB();
+
+        for (let linha of linhas) {
+            const [codigo, ncm] = linha.split('|');
+            await inserirProduto(db, codigo, ncm);
+        }
+
+        // Fechar a conexão com o banco de dados após a conclusão
+        db.end();
+    } catch (err) {
+        console.error(err);
     }
-});
+};
+
+// Chamada da função principal
+lerArquivo();
+
+module.exports = {lerArquivo}

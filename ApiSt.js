@@ -63,7 +63,7 @@ async function getAllNcms() {
 }
 
 // Função principal para realizar a operação
-async function main() {
+async function apist() {
     const ncms = await getAllNcms();
     for (const row of ncms) {
         const ncm = row.ncm;
@@ -88,4 +88,6 @@ async function main() {
     }
 }
 
-main();
+apist();
+
+module.exports = {apist}
