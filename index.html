@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2>Configurações</h2>
+    
+    <label for="horario">Horário de Execução:</label>
+    <input type="time" id="horario" name="horario" required>
+
+    <!-- Removido o input de mensagem, já que não está presente no HTML -->
+
+    <button onclick="salvarConfiguracoes()">Salvar</button>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        function salvarConfiguracoes() {
+            console.log('Botão clicado');
+            const horario = document.getElementById('horario').value;
+            // Envia o horário para o processo principal do Electron
+            ipcRenderer.send('salvar-configuracoes', { horario });
+        }
+    </script>
+</body>
+</html>
