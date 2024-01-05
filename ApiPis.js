@@ -35,7 +35,7 @@ async function ncmJaProcessado(ncm) {
         async function inserirNoBanco(dados) {
             for (const dado of dados) {
                 const jaProcessado = await ncmJaProcessado(dado.ncm.codigo);
-                if (jaProcessado) {
+                if (!dado || !dado.ncm || !dado.ncm.codigo) {
                     console.log(`NCM já processado: ${dados.ncm.codigo}`);
                     continue; // Pula para a próxima iteração se o NCM já foi processado
                 }

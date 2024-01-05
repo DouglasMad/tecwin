@@ -1,106 +1,87 @@
 const { app, Tray, Menu, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const fs = require('fs');
+const mysql = require('mysql');
 const cron = require('node-cron');
-const { execConect } = require('./conexao');
+const moment = require('moment')
+const {execConect} = require('./conexao');
+
+const dbConfig = {
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'db_ncm'
+};
+
+const insertQuery = 'INSERT INTO tec_hora (horaexecute) VALUES (?)';
+
+function conexaoDb() {
+    return mysql.createConnection(dbConfig);
+}
 
 let tray = null;
 let settingsWindow = null;
-let mainWindow = null;
+const connection = conexaoDb();
 
 app.whenReady().then(() => {
-    tray = new Tray(path.join(__dirname, './img/icon.ico'));
-
+    tray = new Tray(path.join(__dirname, '/img/icon.ico'));
     const contextMenu = Menu.buildFromTemplate([
-        { label: 'Star Info', type: 'normal', click: abrirConfigurador },
+        { label: 'Configurações', type: 'normal', click: abrirConfigurador },
         { label: 'Sair', type: 'normal', click: () => app.quit() }
     ]);
 
-    tray.setToolTip('Star Info');
+    tray.setToolTip('Minha Aplicação Electron');
     tray.setContextMenu(contextMenu);
 
-    // Adiciona um listener para o evento de clique no ícone da bandeja
     tray.on('click', () => {
         abrirConfigurador();
     });
 });
 
-
 function abrirConfigurador() {
-    // Cria uma nova janela para as configurações
-    settingsWindow = new BrowserWindow({
-        icon: './img/icon.ico',
-        width: 400,
-        height: 300,
-        webPreferences: {
-            nodeIntegration: true
-        },
-        autoHideMenuBar: true
-    });
-
-
-
-    // Carrega html
-    settingsWindow.loadFile('./index.html');
-
-    ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
-        console.log('Configurações salvas:', configuracoes);
-
-        // Agende a execução da API com base no horário fornecido
-        cron.schedule(configuracoes.horario, () => {
-            // Lógica para iniciar a execução da sua API (execConect)
-            execConect(); // Certifique-se de implementar esta função
-            console.log('API iniciada no horário:', configuracoes.horario);
+    if (!settingsWindow) {
+        settingsWindow = new BrowserWindow({
+            icon: './img/icon.ico',
+            width: 400,
+            height: 300,
+            webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false
+            },
+            autoHideMenuBar: true
         });
 
-        // Caminho para o arquivo de configurações (pode ser ajustado conforme necessário)
-        const caminhoArquivo = path.join(app.getPath('userData'), 'configuracoes.json');
+        settingsWindow.loadFile('index.html');
 
-        // Lê as configurações existentes do arquivo (se existir)
-        let configuracoesExist = {};
-        try {
-            const arquivoExistente = fs.readFileSync(caminhoArquivo, 'utf-8');
-            configuracoesExist = JSON.parse(arquivoExistente);
-        } catch (error) {
-            console.error('Erro ao ler o arquivo de configurações:', error);
-        }
-
-        // Mescla as novas configurações com as existentes
-        const novasConfiguracoes = { ...configuracoesExist, ...configuracoes };
-
-        // Grava as configurações atualizadas no arquivo
-        try {
-            fs.writeFileSync(caminhoArquivo, JSON.stringify(novasConfiguracoes));
-            console.log('Configurações salvas com sucesso.');
-        } catch (error) {
-            console.error('Erro ao salvar o arquivo de configurações:', error);
-        }
-
-        // Fecha a janela de configurações se necessário
-        if (settingsWindow) {
-            settingsWindow.close();
+        settingsWindow.on('closed', () => {
             settingsWindow = null;
-        }
-    });
-
-    // Garante que será fechado
-    settingsWindow.on('closed', () => {
-        settingsWindow = null;
-    });
+        });
+    }
 }
 
-app.on('activate', () => {
-    
+ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
+    connection.query(insertQuery, [configuracoes.horario], (err, results) => {
+        if (err) {
+            console.error('Erro ao inserir horario no banco de dados:', err);
+            return;
+        }
+        console.log('Horário inserido com sucesso:', configuracoes.horario);
+
+        const expressaoCron = moment(configuracoes.horario, 'HH:mm:ss').format('s m H * * *');
+        try {
+            cron.schedule(expressaoCron, () => {
+                console.log('Executando script', configuracoes.horario);
+                execConect();
+            });            
+        } catch (error) {
+            console.error('Erro ao agendar cron:', error)
+            
+        }
+
+        if (settingsWindow) {
+            settingsWindow.close();
+        }
+    });
 });
 
-app.on('close-main-window', () => {
-    // Esconde a janela principal em vez de fechar (pode ser ajustado conforme necessário)
-    if (mainWindow) {
-        mainWindow.hide();
-    }
-});
-
-// Tratamento para o fechamento de todas as janelas
 app.on('window-all-closed', () => {
-    // Mantém o aplicativo rodando mesmo após o fechamento de todas as janelas
 });

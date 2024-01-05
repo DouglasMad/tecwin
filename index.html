@@ -41,18 +41,24 @@
     <label for="horario">Horário de Execução:</label>
     <input type="time" id="horario" name="horario" required>
 
-    <!-- Removido o input de mensagem, já que não está presente no HTML -->
-
     <button onclick="salvarConfiguracoes()">Salvar</button>
 
+    <div id="mensagem"></div>
     <script>
         const { ipcRenderer } = require('electron');
 
         function salvarConfiguracoes() {
-            console.log('Botão clicado');
             const horario = document.getElementById('horario').value;
-            // Envia o horário para o processo principal do Electron
             ipcRenderer.send('salvar-configuracoes', { horario });
+
+            const mensagemDiv = document.getElementById('mensagem');
+            mensagemDiv.innerText = 'Configurações salvas com sucesso.';
+            mensagemDiv.style.display = 'block';
+
+            setTimeout(() => {
+                mensagemDiv.innerText = '';
+                mensagemDiv.style.display = 'none';
+            }, 2000);
         }
     </script>
 </body>
