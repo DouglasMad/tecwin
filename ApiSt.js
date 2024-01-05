@@ -88,6 +88,5 @@ async function apist() {
     }
 }
 
-apist();
 
 module.exports = {apist}

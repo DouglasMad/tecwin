@@ -3,7 +3,7 @@ const {apist} = require('./ApiSt');
 const {buscarNCMs} = require('./ApiPis');
 
 
-async function main(){
+async function execConect(){
     try {
         const resultNcm = await lerArquivo(); //chama primeira api
         console.log('Resultado ImportNCM: ', resultNcm);
@@ -20,4 +20,6 @@ async function main(){
     }
 }
 
-main()
+module.exports = {
+    execConect: execConect
+}

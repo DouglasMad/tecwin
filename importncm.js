@@ -70,7 +70,5 @@ const lerArquivo = async () => {
     }
 };
 
-// Chamada da função principal
-lerArquivo();
 
 module.exports = {lerArquivo}
