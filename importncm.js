@@ -69,10 +69,10 @@ const inserirProduto = (db, codigo, ncm) => {
 // Função para ler o arquivo txt
 const lerArquivo = async () => {
     try {
-        await reiniciarBanco()
+        const db = await connectDB();
+        await reiniciarBanco(db)
         const data = await fs.readFile('C://Users//Felipe Silva//Desktop//code//tecwin//tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
-        const db = await connectDB();
 
         for (let linha of linhas) {
             const [codigo, ncm] = linha.split('|');
