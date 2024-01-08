@@ -36,7 +36,7 @@ async function ncmJaProcessado(ncm) {
             for (const dado of dados) {
                 const jaProcessado = await ncmJaProcessado(dado.ncm.codigo);
                 if (!dado || !dado.ncm || !dado.ncm.codigo) {
-                    console.log(`NCM já processado: ${dados.ncm.codigo}`);
+                    console.log(`NCM já processado: ${dado.ncm.codigo}`);
                     continue; // Pula para a próxima iteração se o NCM já foi processado
                 }
         
