@@ -10,13 +10,14 @@
             padding: 20px;
         }
 
-        h2 {
+        h3 {
             margin-bottom: 20px;
         }
 
         label {
             display: block;
             margin-bottom: 10px;
+            font-size: 13px;
         }
 
         input {
@@ -33,22 +34,80 @@
             border: none;
             cursor: pointer;
         }
+
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .config-container,
+        .container {
+            width: 48%;
+            margin-bottom: 100px;
+        }
+
+        .label-horario {
+            width: 100%;
+        }
+
+        .container label {
+            font-size: 14px;
+        }
+
+        .container span {
+            display: block;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        #console {
+            height: 150px;
+            width: 200%;
+            overflow: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
-    <h2>Configurações</h2>
-    
-    <label for="horario">Horário de Execução:</label>
-    <input type="time" id="horario" name="horario" required>
+    <div class="flex-container">
+        <div class="container"> 
+            <h3 class="text-horario">Configurações</h3>
+            <label class="text-horario" for="horario">Horário de Execução:</label>
+            <input type="time" class="label-horario" name="horario" required>
+            <button onclick="salvarConfiguracoes()">Salvar</button>
+            <div id="mensagem"></div>
+        </div>
 
-    <button onclick="salvarConfiguracoes()">Salvar</button>
+        <div class="config-container">
+            <h3>Última Execução:</h3>
+            <label id="horarioLabel" for="ultimoHorario">Última execução:</label>
+            <span id="horarioFixo"></span>
+        </div>
 
-    <div id="mensagem"></div>
+        <div class="container" id="containerLog">
+            <label for="logErro">Registro de atividades:</label>
+            <div id="console">
+                <p id="console-message"></p>
+            </div>
+        </div>
+    </div>
+
     <script>
         const { ipcRenderer } = require('electron');
 
+        ipcRenderer.on('horario-fixo', (event, horarioFixo) => {
+            const horarioFixoSpan = document.getElementById('horarioFixo');
+            horarioFixoSpan.innerText = `Horário fixo: ${horarioFixo}`;
+        });
+        
+
         function salvarConfiguracoes() {
-            const horario = document.getElementById('horario').value;
+            const horario = document.querySelector('.label-horario').value;
             ipcRenderer.send('salvar-configuracoes', { horario });
 
             const mensagemDiv = document.getElementById('mensagem');

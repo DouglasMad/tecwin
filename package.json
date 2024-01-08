@@ -1,4 +1,7 @@
 {
+  "script": {
+    "start": "electron ./main.js"
+  },
   "dependencies": {
     "axios": "^1.6.1",
     "electron": "^28.1.1",
