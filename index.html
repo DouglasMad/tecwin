@@ -33,6 +33,7 @@
             color: white;
             border: none;
             cursor: pointer;
+            border-radius: 5px;
         }
 
         .flex-container {
@@ -44,8 +45,9 @@
 
         .config-container,
         .container {
-            width: 48%;
+            width: 40%;
             margin-bottom: 100px;
+            padding: 12px;
         }
 
         .label-horario {
@@ -71,6 +73,14 @@
             margin-top: 20px;
             font-family: monospace;
         }
+
+        .container:hover {
+        transform: scale(1.1); /* Ajuste o valor conforme necessário */
+        transition: transform 0.3s ease; /* Tempo e tipo de transição */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para dar destaque */
+        }
+
+
     </style>
 </head>
 <body>
@@ -83,7 +93,7 @@
             <div id="mensagem"></div>
         </div>
 
-        <div class="config-container">
+        <div class="config-container container">
             <h3>Última Execução:</h3>
             <label id="horarioLabel" for="ultimoHorario">Última execução:</label>
             <span id="horarioFixo"></span>
