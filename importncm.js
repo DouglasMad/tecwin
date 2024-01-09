@@ -22,20 +22,6 @@ const connectDB = () => {
     });
 };
 
-// Função para reiniciar o banco de dados (TRUNCATE)
-const reiniciarBanco = (db) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'TRUNCATE TABLE tec_produto; ALTER TABLE tec_produto AUTO_INCREMENT = 1;';
-        db.query(sql, (err) => {
-            if (err) {
-                reject(err);
-            } else {
-                console.log('Banco de dados reiniciado com sucesso!');
-                resolve();
-            }
-        });
-    });
-};
 
 // Função para inserir os dados no banco
 const inserirProduto = (db, codigo, ncm) => {
@@ -69,7 +55,6 @@ const inserirProduto = (db, codigo, ncm) => {
 // Função para ler o arquivo txt
 const lerArquivo = async () => {
     try {
-        await reiniciarBanco()
         const data = await fs.readFile('C://Users//Felipe Silva//Desktop//code//tecwin//tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
         const db = await connectDB();
