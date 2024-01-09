@@ -48,6 +48,8 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  overflow-y: hidden;
+
 }
 
 body {
@@ -55,6 +57,7 @@ body {
   font-size: var(--normal-font-size);
   color: var(--text-color);
   overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 h1,
@@ -378,7 +381,7 @@ button {
 
         <ul class="nav-list">
           <li class="nav-item">
-            <a href="#home" class="nav-link active-link">
+            <a href="#configuracao" class="nav-link active-link">
                 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAAAXNSR0IArs4c6QAAAdxJREFUSEvFltFRxDAMRH2dQCdQCVAJUAlQydEJdAJ5N9mbjSI5zjHM+ScTx9FKq5XkQ7vSOlwJt10K/GIOf7fW3vcGcAnwTwIC+FNr7XPUgb3Ab621x8I4UQM+tPYCf0203syR3c8Ix+n9LuxtgveAFZnoI1oAWB6dgNkX5Tz97MqRDJiIHAQj7GnFfOIg56vFedjheV4ZsEcQjb1OG65ofccxHHgu0GFNqTkdicDQA7DoBIhoMDyiWrGl8w8mRoDPqo/ArtrbSM/sEM4RGU/ow9hHUUo4gCBZi6gjsGjGIMYirb18Zmngf9G/KLce1XjpxjwNUjBReF07nbHmu1Rj0OlxL92QG6nodJEuQDNxSZRqFA6c7em8pwhtsEQzadNet5z4KBCnOutaEdiDEUPDwJ5LV2JF3VZq0gGyJS6nOopLo7ASl1fACrxXx1vlEZsUDcbncuxmw3W86q8zEgbVQFRWOFnNYs3v4TrmIAYFMtoyOY9z/i8ObtZxb0jImcWkmYF6Q2J1SajGIuA+Cj2fgBKN8hlFF3M/XE7qXhrk2UWgKrM/XQSix3r3C0IGnEZWGdt75/JpE23+62XPu1TMe1V+adB7I/b8u/iy61DF8mn/EuCuwdGPVwP+BYcbkx/LXuokAAAAAElFTkSuQmCC"/> Configurações
             </a>
           </li>
@@ -408,7 +411,7 @@ button {
         </nav>
       </header>
 
-      <section class="section section-height container">
+      <section class="section section-height container visible" id="home">
         <div class="flex-container">
             <div class="container">
                 <h1>Bem-vindo à Tela de Espera!</h1>
@@ -419,7 +422,7 @@ button {
 
     <hr>
 
-      <section class="section section-height container" id="home">
+      <section class="section section-height container" id="configuracao">
         <div class="flex-container">
             <div class="container"> 
                 <h3 class="text-horario">Configurações</h3>
@@ -478,9 +481,21 @@ button {
         const navLink = document.querySelectorAll(".nav-link");
 
         function linkAction() {
-          const main = document.getElementById("main");
-          main.classList.remove("show-menu");
+            const main = document.getElementById("main");
+            main.classList.remove("show-menu");
+                
+            // Oculta todas as seções
+            const sections = document.querySelectorAll(".section");
+            sections.forEach((section) => {
+                section.classList.remove("visible");
+            });
+        
+            // Obtém o ID da seção clicada e exibe apenas essa seção
+            const targetId = this.getAttribute("href").substring(1);
+            const targetSection = document.getElementById(targetId);
+            targetSection.classList.add("visible");
         }
+
         navLink.forEach((n) => n.addEventListener("click", linkAction));
 
         function scrollHeader() {
@@ -492,25 +507,7 @@ button {
 
         const sections = document.querySelectorAll("section[id]");
 
-        function scrollActive() {
-          const scrollY = window.pageYOffset;
         
-          sections.forEach((current) => {
-            const sectionHeight = current.offsetHeight,
-              sectionTop = current.offsetTop - 58,
-              sectionId = current.getAttribute("id");
-        
-            if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
-              document
-                .querySelector(".nav-menu a[href*=" + sectionId + "]")
-                .classList.add("active-link");
-            } else {
-              document
-                .querySelector(".nav-menu a[href*=" + sectionId + "]")
-                .classList.remove("active-link");
-            }
-          });
-        }
         window.addEventListener("scroll", scrollActive);
 
         //conexão com main.js
