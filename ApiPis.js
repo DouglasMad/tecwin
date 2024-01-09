@@ -32,53 +32,56 @@ async function ncmJaProcessado(ncm) {
     });
 }
 
-        async function inserirNoBanco(dados) {
-            for (const dado of dados) {
-                const jaProcessado = await ncmJaProcessado(dado.ncm.codigo);
-                if (!dado || !dado.ncm || !dado.ncm.codigo) {
-                    console.log(`NCM já processado: ${dado.ncm.codigo}`);
-                    continue; // Pula para a próxima iteração se o NCM já foi processado
-                }
-        
-                const query = `INSERT INTO tec_ipi (
-                    ncm_codigo, ncm_sequencial, unidade_medida_codigo, unidade_medida_descricao, 
-                    ii, ii_normal, tipo_ii, ipi, ipi_normal, tipo_ipi, 
-                    pis_pasep, cofins, tipo_icms, gatt, mercosul, existe_st, necessidade_li
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        
-                const valores = [
-                    dado.ncm.codigo,
-                    dado.ncm.sequencial,
-                    dado.ncm.unidadeMedida.codigo,
-                    dado.ncm.unidadeMedida.descricao,
-                    dado.ii,
-                    dado.iiNormal,
-                    dado.tipoII,
-                    dado.ipi,
-                    dado.ipiNormal,
-                    dado.tipoIPI,
-                    dado.pisPasep,
-                    dado.cofins,
-                    dado.tipoICMS,
-                    dado.gatt,
-                    dado.mercosul,
-                    dado.existeST,
-                    dado.necessidadeLI
-                ];
-        
-                try {
-                    await new Promise((resolve, reject) => {
-                        db.query(query, valores, (erro, result) => {
-                            if (erro) reject(erro);
-                            else resolve(result);
-                        });
-                    });
-                    console.log('Dados inseridos:', valores);
-                } catch (erro) {
-                    console.error('Erro ao inserir dados:', erro);
-                }
-            }
+async function inserirNoBanco(dados) {
+    if (dados.length > 0 && dados[0].ncm && dados[0].ncm.codigo) {
+        const dado = dados[0]; // Pega apenas o primeiro elemento do array
+        const jaProcessado = await ncmJaProcessado(dado.ncm.codigo);
+        if (jaProcessado) {
+            console.log(`NCM já processado: ${dado.ncm.codigo}`);
+            return;
         }
+
+        const query = `INSERT INTO tec_ipi (
+            ncm_codigo, ncm_sequencial, unidade_medida_codigo, unidade_medida_descricao, 
+            ii, ii_normal, tipo_ii, ipi, ipi_normal, tipo_ipi, 
+            pis_pasep, cofins, tipo_icms, gatt, mercosul, existe_st, necessidade_li
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const valores = [
+            dado.ncm.codigo,
+            dado.ncm.sequencial,
+            dado.ncm.unidadeMedida.codigo,
+            dado.ncm.unidadeMedida.descricao,
+            dado.ii,
+            dado.iiNormal,
+            dado.tipoII,
+            dado.ipi,
+            dado.ipiNormal,
+            dado.tipoIPI,
+            dado.pisPasep,
+            dado.cofins,
+            dado.tipoICMS,
+            dado.gatt,
+            dado.mercosul,
+            dado.existeST,
+            dado.necessidadeLI
+        ];
+
+        try {
+            await new Promise((resolve, reject) => {
+                db.query(query, valores, (erro, result) => {
+                    if (erro) reject(erro);
+                    else resolve(result);
+                });
+            });
+            console.log('Dados inseridos:', valores);
+        } catch (erro) {
+            console.error('Erro ao inserir dados:', erro);
+        }
+    } else {
+        console.log('Nenhum dado válido para inserir');
+    }
+}
 
 async function buscarNCMs() {
     const query = 'SELECT ncm FROM tec_produto';
