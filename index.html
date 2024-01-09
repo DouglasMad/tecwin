@@ -58,6 +58,7 @@ body {
   color: var(--text-color);
   overflow-x: hidden;
   overflow-y: hidden;
+  height: 100vh;
 }
 
 h1,
@@ -216,6 +217,8 @@ img {
   color: var(--title-color);
   font-size: var(--big-font-size);
   line-height: 130%;
+  height: 40px;
+  padding-right: 48%;
 }
 
 .header-logo {
@@ -315,7 +318,7 @@ button {
 
 /* Estilo para a seção Última Execução */
 #about {
-    padding-bottom: 20%;
+ 
     padding-right: 60%;
 
 }
@@ -326,7 +329,6 @@ button {
 
 /* Estilo para a seção Registro de Atividades */
 #portfolio {
-    padding-bottom: 20%;
     padding-right: 60%;
 }
 
@@ -404,21 +406,22 @@ button {
         <nav class="header-nav container">
           <a href="#" class="header-logo"></a>
 
-          <!-- Toggle button -->
           <div class="header-toggle" id="header-toggle">
-            <i class="bx bx-grid-alt"></i>
+            <img id="icone" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAIFJREFUSEvtlDEOgDAMA68fQzDwayTgZbC0DKlCItF2QOlaK1bs2InOL3Wez3CCHZiVrQ5gyX8nMDlw1QaXIVnZ2ItTCaR0ZaAksHBBYCugaah5/dnktzPdgDUze3Hjg9a8OaQHkWSZePuOsylRFc91emvYi6s88CbUi/thkptXxQ1yhTgZtMdz8gAAAABJRU5ErkJggg=="/>
           </div>
         </nav>
       </header>
 
-      <section class="section section-height container visible" id="home">
-        <div class="flex-container">
-            <div class="container">
-                <h1>Bem-vindo à Tela de Espera!</h1>
-                <!-- Adicione qualquer conteúdo adicional para a tela de espera -->
-            </div>
-        </div>
-    </section>
+      <section class="section-height sectionhome" id="home">
+        <div class="loader">
+            <div class="loader__bar"></div>
+            <div class="loader__bar"></div>
+            <div class="loader__bar"></div>
+            <div class="loader__bar"></div>
+            <div class="loader__bar"></div>
+            <div class="loader__ball"></div>
+          </div>
+      </section>
 
     <hr>
 
