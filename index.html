@@ -67,6 +67,12 @@ h3 {
   color: var(--title-color);
 }
 
+label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
 ul {
   list-style: none;
 }
@@ -211,6 +217,12 @@ img {
   justify-content: space-between;
   align-items: center;
 }
+input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
 
 .header-logo,
 .header-toggle {
@@ -303,6 +315,13 @@ button {
             border: none;
             cursor: pointer;
         }
+
+.flex-conteiner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+}
 
 .text-horario {
     color: #333;
@@ -456,15 +475,8 @@ button {
 
     </main>
 
-
-
-
-
-
-
-
     <script>
-
+        //Menu de navegação lateral
         const headerToggle = document.getElementById("header-toggle"),
           main = document.getElementById("main"),
           navClose = document.getElementById("nav-close");
@@ -487,31 +499,10 @@ button {
             const main = document.getElementById("main");
             main.classList.remove("show-menu");
                 
-            // Oculta todas as seções
-            const sections = document.querySelectorAll(".section");
-            sections.forEach((section) => {
-                section.classList.remove("visible");
-            });
-        
-            // Obtém o ID da seção clicada e exibe apenas essa seção
-            const targetId = this.getAttribute("href").substring(1);
-            const targetSection = document.getElementById(targetId);
-            targetSection.classList.add("visible");
         }
 
         navLink.forEach((n) => n.addEventListener("click", linkAction));
 
-        function scrollHeader() {
-          const header = document.getElementById("header");
-          if (this.scrollY >= 50) header.classList.add("scroll-header");
-          else header.classList.remove("scroll-header");
-        }
-        window.addEventListener("scroll", scrollHeader);
-
-        const sections = document.querySelectorAll("section[id]");
-
-        
-        window.addEventListener("scroll", scrollActive);
 
         //conexão com main.js
         const { ipcRenderer } = require('electron');

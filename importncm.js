@@ -1,7 +1,6 @@
 const fs = require('fs').promises;
 const mysql = require('mysql');
 
-// Função para conectar ao banco de dados
 const connectDB = () => {
     return new Promise((resolve, reject) => {
         const db = mysql.createConnection({
@@ -23,7 +22,21 @@ const connectDB = () => {
 };
 
 
-// Função para inserir os dados no banco
+const reiniciarBanco = (db) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'TRUNCATE TABLE tec_produto;';
+        db.query(sql, (err) => {
+            if (err) {
+                reject(err);
+            } else {
+                console.log('Banco de dados reiniciado com sucesso!');
+                resolve();
+            }
+        });
+    });
+};
+
+
 const inserirProduto = (db, codigo, ncm) => {
     return new Promise((resolve, reject) => {
         // Certifique-se de que o NCM está definido e remova os pontos
@@ -45,19 +58,21 @@ const inserirProduto = (db, codigo, ncm) => {
                     }
                 });
             } else {
-                console.log(`Produto com código ${codigo} já existe no banco de dados.p`);
+                console.log(`Produto com código ${codigo} já existe no banco de dados.`);
                 resolve();
             }
         });
     });
 };
 
-// Função para ler o arquivo txt
+
 const lerArquivo = async () => {
     try {
+        const db = await connectDB();
+        await reiniciarBanco(db);
+
         const data = await fs.readFile('C://Users//Felipe Silva//Desktop//code//tecwin//tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
-        const db = await connectDB();
 
         for (let linha of linhas) {
             const [codigo, ncm] = linha.split('|');
@@ -71,5 +86,4 @@ const lerArquivo = async () => {
     }
 };
 
-
-module.exports = {lerArquivo}
+module.exports = { lerArquivo };
