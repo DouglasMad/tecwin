@@ -32,53 +32,56 @@ async function ncmJaProcessado(ncm) {
     });
 }
 
-        async function inserirNoBanco(dados) {
-            for (const dado of dados) {
-                const jaProcessado = await ncmJaProcessado(dado.ncm.codigo);
-                if (!dado || !dado.ncm || !dado.ncm.codigo) {
-                    console.log(`NCM já processado: ${dado.ncm.codigo}`);
-                    continue; // Pula para a próxima iteração se o NCM já foi processado
-                }
-        
-                const query = `INSERT INTO tec_ipi (
-                    ncm_codigo, ncm_sequencial, unidade_medida_codigo, unidade_medida_descricao, 
-                    ii, ii_normal, tipo_ii, ipi, ipi_normal, tipo_ipi, 
-                    pis_pasep, cofins, tipo_icms, gatt, mercosul, existe_st, necessidade_li
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        
-                const valores = [
-                    dado.ncm.codigo,
-                    dado.ncm.sequencial,
-                    dado.ncm.unidadeMedida.codigo,
-                    dado.ncm.unidadeMedida.descricao,
-                    dado.ii,
-                    dado.iiNormal,
-                    dado.tipoII,
-                    dado.ipi,
-                    dado.ipiNormal,
-                    dado.tipoIPI,
-                    dado.pisPasep,
-                    dado.cofins,
-                    dado.tipoICMS,
-                    dado.gatt,
-                    dado.mercosul,
-                    dado.existeST,
-                    dado.necessidadeLI
-                ];
-        
-                try {
-                    await new Promise((resolve, reject) => {
-                        db.query(query, valores, (erro, result) => {
-                            if (erro) reject(erro);
-                            else resolve(result);
-                        });
-                    });
-                    console.log('Dados inseridos:', valores);
-                } catch (erro) {
-                    console.error('Erro ao inserir dados:', erro);
-                }
-            }
+async function inserirNoBanco(dados) {
+    if (dados.length > 0 && dados[0].ncm && dados[0].ncm.codigo) {
+        const dado = dados[0]; // Pega apenas o primeiro elemento do array
+        const jaProcessado = await ncmJaProcessado(dado.ncm.codigo);
+        if (jaProcessado) {
+            console.log(`NCM já processado: ${dado.ncm.codigo}`);
+            return;
         }
+
+        const query = `INSERT INTO tec_ipi (
+            ncm_codigo, ncm_sequencial, unidade_medida_codigo, unidade_medida_descricao, 
+            ii, ii_normal, tipo_ii, ipi, ipi_normal, tipo_ipi, 
+            pis_pasep, cofins, tipo_icms, gatt, mercosul, existe_st, necessidade_li
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const valores = [
+            dado.ncm.codigo,
+            dado.ncm.sequencial,
+            dado.ncm.unidadeMedida.codigo,
+            dado.ncm.unidadeMedida.descricao,
+            dado.ii,
+            dado.iiNormal,
+            dado.tipoII,
+            dado.ipi,
+            dado.ipiNormal,
+            dado.tipoIPI,
+            dado.pisPasep,
+            dado.cofins,
+            dado.tipoICMS,
+            dado.gatt,
+            dado.mercosul,
+            dado.existeST,
+            dado.necessidadeLI
+        ];
+
+        try {
+            await new Promise((resolve, reject) => {
+                db.query(query, valores, (erro, result) => {
+                    if (erro) reject(erro);
+                    else resolve(result);
+                });
+            });
+            console.log('Dados inseridos:', valores);
+        } catch (erro) {
+            console.error('Erro ao inserir dados:', erro);
+        }
+    } else {
+        console.log('Nenhum dado válido para inserir');
+    }
+}
 
 async function buscarNCMs() {
     const query = 'SELECT ncm FROM tec_produto';
@@ -93,12 +96,10 @@ async function buscarNCMs() {
         for (const linha of resultados) {
             await fazerRequisicaoAPI(linha.ncm).catch(e => {
                 console.error('Erro com o NCM:', linha.ncm, e);
-               
             });
         }
     } catch (err) {
         console.error('Erro ao buscar NCMs:', err);
-        
     }
 }   
 
@@ -119,29 +120,21 @@ async function obterTodosNCMs() {
     }
 }
 
-async function fazerRequisicaoAPI() {
+async function fazerRequisicaoAPI(ncm) {
+    const chave = 'TFACS-Q4LVT-XYYNF-ZNW59'; // Substitua com sua chave API real
+    const cliente = '02119874'; // Substitua com o ID do seu cliente
+    const formato = 'json';
+    const url = `https://ics.multieditoras.com.br/ics/tec/${ncm}?chave=${chave}&cliente=${cliente}&formato=${formato}`;
+
     try {
-        const ncms = await obterTodosNCMs(); // Adiciona esta função para buscar todas as NCMs
-        const chave = 'TFACS-Q4LVT-XYYNF-ZNW59';
-        const cliente = '02119874';
-        const formato = 'json';
+        const response = await axios.get(url);
+        const data = response.data;
 
-        for (const ncm of ncms) {
-            const url = `https://ics.multieditoras.com.br/ics/tec/${ncm}?chave=${chave}&cliente=${cliente}&formato=${formato}`;
-
-            try {
-                const response = await axios.get(url);
-                const data = response.data;
-
-                if (data.tec && Array.isArray(data.tec)) {
-                    await inserirNoBanco(data.tec); // Passa todos os dados para inserirNoBanco
-                }
-            } catch (error) {
-                console.error('Erro ao fazer a chamada API para o NCM', ncm, ':', error);
-            }
+        if (data.tec && Array.isArray(data.tec)) {
+            await inserirNoBanco(data.tec); // Passa todos os dados para inserirNoBanco
         }
-    } catch (err) {
-        console.error('Erro ao buscar NCMs:', err);
+    } catch (error) {
+        console.error('Erro ao fazer a chamada API para o NCM', ncm, ':', error);
     }
 }
 
@@ -149,5 +142,4 @@ async function main() {
     await buscarNCMs();
 }
 
-
-module.exports = {buscarNCMs}
+module.exports = { buscarNCMs };
