@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const mysql = require('mysql');
+const { promisify } = require('util');
 
 const connectDB = () => {
     return new Promise((resolve, reject) => {
@@ -22,7 +23,42 @@ const connectDB = () => {
 };
 
 
-const reiniciarBanco = (db) => {
+//Função para atualizar
+async function atualizarStatus(db, etapa, status) {
+    return new Promise((resolve, reject) => {
+        const sql = "INSERT INTO execucao_status (etapa, status) VALUES ('Primeira API', 'em_andamento') ON DUPLICATE KEY UPDATE status = VALUES(status)";
+        db.query(sql, [etapa, status], (err) => {
+            if(err) {
+                reject(err);
+            } else{
+                resolve();
+            }
+        });
+    });
+};
+
+
+//Função para Obter
+async function obterStatus(db, etapa) {
+    return new Promise((resolve, reject) => {
+        const query = `SELECT status FROM execucao_status WHERE etapa = '${etapa}'`;
+
+        db.query(query, (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                // Verifica se há resultados antes de acessar a propriedade 'status'
+                const status = results.length > 0 ? results[0].status : null;
+                resolve(status);
+            }
+        });
+    });
+}
+
+
+
+
+async function reiniciarBancoAsync(db) {
     return new Promise((resolve, reject) => {
         const sql = 'TRUNCATE TABLE tec_produto;';
         db.query(sql, (err) => {
@@ -34,7 +70,7 @@ const reiniciarBanco = (db) => {
             }
         });
     });
-};
+}
 
 
 const inserirProduto = (db, codigo, ncm) => {
@@ -69,7 +105,6 @@ const inserirProduto = (db, codigo, ncm) => {
 const lerArquivo = async () => {
     try {
         const db = await connectDB();
-        await reiniciarBanco(db);
 
         const data = await fs.readFile('C://Users//Felipe Silva//Desktop//code//tecwin//tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
@@ -86,4 +121,11 @@ const lerArquivo = async () => {
     }
 };
 
-module.exports = { lerArquivo };
+module.exports = { 
+    lerArquivo,
+    connectDB,
+    reiniciarBancoAsync,
+    atualizarStatus,
+    obterStatus,
+    
+};
