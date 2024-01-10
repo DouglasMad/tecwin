@@ -1,7 +1,6 @@
 const {lerArquivo, connectDB, reiniciarBancoAsync, atualizarStatus, obterStatus} = require('./importncm');
 const {apist} = require('./ApiSt');
 const {buscarNCMs} = require('./ApiPis');
-const mysql = ('mysql')
 
 
 
