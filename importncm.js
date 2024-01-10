@@ -26,8 +26,9 @@ const connectDB = () => {
 //Função para atualizar
 async function atualizarStatus(db, etapa, status) {
     return new Promise((resolve, reject) => {
-        const sql = "INSERT INTO execucao_status (etapa, status) VALUES ('Primeira API', 'em_andamento') ON DUPLICATE KEY UPDATE status = VALUES(status)";
-        db.query(sql, [etapa, status], (err) => {
+        const query = `INSERT INTO execucao_status (etapa, status) VALUES ('${etapa}', '${status}')
+                    ON DUPLICATE KEY UPDATE status = VALUES(status)`;
+        db.query(query, [etapa, status], (err) => {
             if(err) {
                 reject(err);
             } else{
