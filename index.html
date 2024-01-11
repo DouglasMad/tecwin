@@ -503,6 +503,11 @@ button {
             const horario = document.querySelector('.label-horario').value;
             ipcRenderer.send('salvar-configuracoes', { horario });
 
+            if (horarioSelecionado === ""){
+            console.error('Por Favor, Selecione um horário válido.')
+            return
+            }
+
             const mensagemDiv = document.getElementById('mensagem');
             mensagemDiv.innerText = 'Configurações salvas com sucesso.';
             mensagemDiv.style.display = 'block';

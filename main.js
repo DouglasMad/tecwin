@@ -86,7 +86,11 @@ ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
             console.error('Erro ao inserir horario no banco de dados:', err);
             return;
         }
+        var horarioSelecionado = document.querySelector('input[name="horario"]').value;
 
+        if (horarioSelecionado === ""){
+            return
+        }
         console.log('Horário inserido com sucesso:', configuracoes.horario);
 
         // Converte o horário para uma expressão cron e agenda a tarefa
