@@ -62,9 +62,9 @@ function abrirConfigurador() {
         settingsWindow.loadFile('index.html');
 
         // Manipula o evento de fechamento da janela
-        // settingsWindow.on('closed', () => {
-        //     settingsWindow = null;
-        // });
+        settingsWindow.on('closed', () => {
+            settingsWindow = null;
+        });
     }
 }
 process.on('SIGINT', () => {
