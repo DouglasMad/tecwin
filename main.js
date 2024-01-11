@@ -62,11 +62,21 @@ function abrirConfigurador() {
         settingsWindow.loadFile('index.html');
 
         // Manipula o evento de fechamento da janela
-        settingsWindow.on('closed', () => {
-            settingsWindow = null;
-        });
+        // settingsWindow.on('closed', () => {
+        //     settingsWindow = null;
+        // });
     }
 }
+process.on('SIGINT', () => {
+    if (mainWindow) {
+      // Fecha a janela principal
+      mainWindow.close();
+    }
+  
+    // Reinicia a aplicação
+    app.relaunch();
+    app.quit();
+  });
 
 // Manipula a mensagem para salvar configurações recebida do front-end
 ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
