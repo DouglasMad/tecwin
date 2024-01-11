@@ -10,8 +10,6 @@
     />
     <style>
         
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
-
 :root {
   --header-height: 3.5rem;
   --first-color: #482ef9;
@@ -67,12 +65,6 @@ h3 {
   color: var(--title-color);
 }
 
-label {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 13px;
-}
-
 ul {
   list-style: none;
 }
@@ -87,16 +79,12 @@ img {
   object-fit: cover;
 }
 
-.container {
-  max-width: 1024px;
-}
-
 .section {
   padding: 4.5rem 0 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-}
+  }
 
 .section-height {
   height: 100vh;
@@ -355,24 +343,19 @@ button {
     color: #333;
 }
 
-#console {
-    height: 300px;
-    width: 580%;
-    overflow: auto;
+#consolesimulado {
+    height: 200px;
+    width: 800px;
     border: 1px solid #ccc;
     padding: 10px;
-    margin-top: 20px;
+    margin: 20px;
+    margin-left: 60%; 
+    position: relative;
+    top: 50%; 
+    transform: translateY(-50%); 
     font-family: monospace;
 }
-#horas {
-    height: 300px;
-    width: 700%;
-    overflow: auto;
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin-top: 20px;
-    font-family: monospace;
-}
+
 .foto2 {
     width: 25px;
 }
@@ -444,8 +427,7 @@ button {
 
     <hr>
 
-      <section class="section section-height container" id="configuracao">
-        <div class="flex-container">
+      <section class="section section-height sectionhome " id="configuracao">
             <div class="container"> 
                 <h3 class="text-horario">Configurações</h3>
                 <label class="text-horario" for="horario">Horário de Execução:</label>
@@ -455,13 +437,11 @@ button {
             </div>
       </section>
 <hr>
-<section class="section section-height container" id="about">
-  <div class="config-container">
-      <label id="horarioLabel" for="ultimoHorario">Últimas Execuções:</label>
-      <span id="horarioFixo"></span>
-      <div id="horas">
+<section class="section-height" id="about">
+      <label id="label_texto"></label>
+      <div id="consolesimulado">
             <!-- Seção para a primeira API -->
-            <div id="status-primeira-api">Status: Em andamento</div>
+            <div id="status-primeira-api">Status: Aguardando execução</div>
 
             <!-- Seção para a segunda API -->
             <div id="status-segunda-api">Status: Aguardando execução</div>
@@ -469,14 +449,14 @@ button {
             <!-- Seção para a terceira API -->
             <div id="status-terceira-api">Status: Aguardando execução</div>
       </div>
-  </div>
 </section>
 <hr>
-      <section class="section section-height container" id="portfolio">
-        <div class="container" id="containerLog">
-            <label for="logErro">Registro de Atividades:</label>
-            <div id="console-terceira-api">Status: 'Aguardando termino de execução</div>
-        </div>
+      <section class=" section-height" id="portfolio">
+            <label></label>
+            <div id="consolesimulado"> 
+              <div id="console-terceira-api">Status: Aguardando termino de execução</div>
+            </div>
+            
       </section>
 
     </main>
@@ -536,5 +516,3 @@ button {
 </body>
 </html>
 </html>
-tml>
-tml>
