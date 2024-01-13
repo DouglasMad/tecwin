@@ -35,34 +35,35 @@ const fs = require('fs')
               });
             }
 
-            // Função para atualizar o status no arquivo HTML
-            async function atualizarConsoleHTML(apiId, novoStatus) {
-              const filePath = 'C:/Users/Felipe Silva/Desktop/code/tecwin/d10/tecwin/index.html';
-            
-              return new Promise((resolve, reject) => {
-                fs.readFile(filePath, 'utf8', (err, data) => {
-                  if (err) {
-                    console.error('Erro ao ler o arquivo HTML:', err);
-                    reject(err);
-                    return;
-                  }
-            
-                  const novoConteudo = data.replace(
-                    new RegExp(`id="console-${apiId}-api">Status: Aguardando termino de execução.*?</div>`),
-                    `id="console-${apiId}-api">Aplicação executada com sucesso</div>`
-                  );
-            
-                  fs.writeFile(filePath, novoConteudo, 'utf8', (err) => {
-                    if (err) {
-                      console.error('Erro ao escrever no arquivo HTML:', err);
-                      reject(err);
-                    } else {
-                      resolve();
-                    }
-                  });
-                });
-              });
-            }
+// Função para atualizar o console no arquivo HTML
+async function atualizarConsoleHTML(apiId, novoStatus) {
+  const filePath = 'C:/Users/Felipe Silva/Desktop/code/tecwin/d10/tecwin/index.html';
+
+  return new Promise((resolve, reject) => {
+      fs.readFile(filePath, 'utf8', (err, data) => {
+          if (err) {
+              console.error('Erro ao ler o arquivo HTML:', err);
+              reject(err);
+              return;
+          }
+
+          const novoConteudo = data.replace(
+              new RegExp(`id="console-${apiId}-api">.*?</div>`),
+              `id="console-${apiId}-api">${novoStatus}</div>`
+          );
+
+          fs.writeFile(filePath, novoConteudo, 'utf8', (err) => {
+              if (err) {
+                  console.error('Erro ao escrever no arquivo HTML:', err);
+                  reject(err);
+              } else {
+                  console.log(`Console da API ${apiId} atualizado para: ${novoStatus}`);
+                  resolve();
+              }
+          });
+      });
+  });
+}
 
             async function reiniciarAplicacao() {
               // Configurar status inicial no HTML
@@ -117,11 +118,10 @@ async function execConect() {
             console.log('Resultado ApiPis:', resultPis);
             await atualizarStatus(db, 'Terceira API', 'concluido');
             await atualizarStatusHTML('terceira', 'Concluido');
+            await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
           }
 
-          if (statusImportNCM === 'concluido' && statusApiPis === 'concluido' && statusApiSt === 'concluido') {
-            await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
-        }
+
 
         // Fechar a conexão com o banco de dados
         db.end();
