@@ -4,7 +4,7 @@ const path = require('path');
 const mysql = require('mysql');
 const cron = require('node-cron');
 const moment = require('moment');
-const { execConect } = require('./conexao'); // Suponho que 'conexao' seja um módulo personalizado
+const { execConect, atualizarConsoleHTML, atualizarStatusHTML, reiniciarAplicacao } = require('./conexao');
 
 // Configurações do banco de dados
 const dbConfig = {
@@ -42,6 +42,9 @@ app.whenReady().then(() => {
     tray.on('click', () => {
         abrirConfigurador();
     });
+
+    // Configuração inicial de status no HTML e no console
+    reiniciarAplicacao();
 });
 
 // Função para abrir a janela de configurações
@@ -67,16 +70,17 @@ function abrirConfigurador() {
         });
     }
 }
+
 process.on('SIGINT', () => {
     if (mainWindow) {
-      // Fecha a janela principal
-      mainWindow.close();
+        // Fecha a janela principal
+        mainWindow.close();
     }
-  
+
     // Reinicia a aplicação
     app.relaunch();
     app.quit();
-  });
+});
 
 // Manipula a mensagem para salvar configurações recebida do front-end
 ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
@@ -86,20 +90,17 @@ ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
             console.error('Erro ao inserir horario no banco de dados:', err);
             return;
         }
-        var horarioSelecionado = document.querySelector('input[name="horario"]').value;
 
-        if (horarioSelecionado === ""){
-            return
-        }
         console.log('Horário inserido com sucesso:', configuracoes.horario);
 
         // Converte o horário para uma expressão cron e agenda a tarefa
         const expressaoCron = moment(configuracoes.horario, 'HH:mm:ss').format('s m H * * *');
+
         try {
             cron.schedule(expressaoCron, () => {
                 console.log('Executando script', configuracoes.horario);
                 execConect();
-            });            
+            });
         } catch (error) {
             console.error('Erro ao agendar cron:', error);
         }
@@ -110,6 +111,7 @@ ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
         }
     });
 });
+
 
 // Manipula o evento de fechamento de todas as janelas
 app.on('window-all-closed', () => {

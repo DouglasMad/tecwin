@@ -5,11 +5,6 @@ const fs = require('fs')
 
 
 
-async function execConect() {
-    try {
-        const db = await connectDB();
-
-
             // Função para atualizar o status no arquivo HTML
             async function atualizarStatusHTML(apiId, novoStatus) {
               const filePath = 'C:/Users/Felipe Silva/Desktop/code/tecwin/d10/tecwin/index.html';
@@ -41,7 +36,7 @@ async function execConect() {
             }
 
             // Função para atualizar o status no arquivo HTML
-            async function atualizarConsole(apiId, novoStatus) {
+            async function atualizarConsoleHTML(apiId, novoStatus) {
               const filePath = 'C:/Users/Felipe Silva/Desktop/code/tecwin/d10/tecwin/index.html';
             
               return new Promise((resolve, reject) => {
@@ -69,21 +64,23 @@ async function execConect() {
               });
             }
 
-            
-            // Configurar status inicial no HTML
-            await atualizarStatusHTML('primeira', 'Aguardando execução');
-            await atualizarStatusHTML('segunda', 'Aguardando execução');
-            await atualizarStatusHTML('terceira', 'Aguardando execução');
-            await atualizarConsole('terceira', 'Aguardando termino de execução');
-
-
             async function reiniciarAplicacao() {
               // Configurar status inicial no HTML
               await atualizarStatusHTML('primeira', 'Aguardando execução');
               await atualizarStatusHTML('segunda', 'Aguardando execução');
               await atualizarStatusHTML('terceira', 'Aguardando execução');
-              await atualizarConsole('terceira', 'Aguardando término de execução');
+              await atualizarConsoleHTML('terceira', 'Aguardando iniciar execução');
             }
+
+
+
+
+async function execConect() {
+    try {
+        const db = await connectDB();
+
+
+
 
 
         // Verificar e executar a primeira API
@@ -93,6 +90,7 @@ async function execConect() {
             await reiniciarBancoAsync(db);
             await atualizarStatusHTML('primeira', 'Em andamento');
             await atualizarStatus(db, 'Primeira API', 'em_andamento');
+            await atualizarConsoleHTML('terceira', 'Aguardando terminar execução');
             const resultNcm = await lerArquivo();
             console.log('Resultado ImportNCM: ', resultNcm);
             await atualizarStatus(db, 'Primeira API', 'concluido');
@@ -122,8 +120,7 @@ async function execConect() {
           }
 
           if (statusImportNCM === 'concluido' && statusApiPis === 'concluido' && statusApiSt === 'concluido') {
-            await atualizarStatusHTML('terceira', 'Aguardando execução \n Execução concluída com sucesso, agende o próximo horário');
-            await atualizarConsole('terceira', 'Aplicação executada com sucesso');
+            await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
         }
 
         // Fechar a conexão com o banco de dados
@@ -134,5 +131,8 @@ async function execConect() {
 }
 
 module.exports = {
-    execConect: execConect
+    execConect: execConect,
+    atualizarConsoleHTML,
+    atualizarStatusHTML,
+    reiniciarAplicacao,
 }
