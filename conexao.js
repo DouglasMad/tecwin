@@ -88,7 +88,6 @@ async function execConect() {
         const statusImportNCM = await obterStatus(db, 'Primeira API');
         if (statusImportNCM !== 'concluido') {
             await reiniciarAplicacao()
-            await reiniciarBancoAsync(db);
             await atualizarStatusHTML('primeira', 'Em andamento');
             await atualizarStatus(db, 'Primeira API', 'em_andamento');
             await atualizarConsoleHTML('terceira', 'Aguardando terminar execução');

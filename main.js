@@ -5,6 +5,7 @@ const mysql = require('mysql');
 const cron = require('node-cron');
 const moment = require('moment');
 const { execConect, atualizarConsoleHTML, atualizarStatusHTML, reiniciarAplicacao } = require('./conexao');
+const {reiniciarBancoAsync, connectDB} = require('./importncm')
 
 // Configurações do banco de dados
 const dbConfig = {
@@ -20,6 +21,16 @@ const insertQuery = 'INSERT INTO tec_hora (horaexecute) VALUES (?)';
 // Função para criar uma conexão com o banco de dados
 function conexaoDb() {
     return mysql.createConnection(dbConfig);
+}
+
+async function iniciarApp () {
+    const db = await connectDB()
+    try {
+        await reiniciarBancoAsync(db);
+        console.log('Banco de dados reiniciado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao reiniciar banco de dados: ', error)
+    }
 }
 
 // Variáveis globais
@@ -45,6 +56,7 @@ app.whenReady().then(() => {
 
     // Configuração inicial de status no HTML e no console
     reiniciarAplicacao();
+    iniciarApp();
 });
 
 // Função para abrir a janela de configurações
