@@ -23,6 +23,7 @@ function conexaoDb() {
     return mysql.createConnection(dbConfig);
 }
 
+//Função para reiniciar IMPORTAÇÕES 
 async function iniciarApp () {
     const db = await connectDB()
     try {
@@ -94,12 +95,22 @@ process.on('SIGINT', () => {
     app.quit();
 });
 
-// Manipula a mensagem para salvar configurações recebida do front-end
-ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
+
+// Função para limpar horário no banco de dados
+async function limparBancoHorario() {
+    const sql = 'TRUNCATE TABLE tec_hora;';
+    await connection.query(sql);
+}
+
+// Função para inserir um novo horário no banco de dados
+async function inserirHorarioNoBanco(configuracoes) {
+    // Limpa tabela de horários antes de inserir novo horário
+    await limparBancoHorario();
+
     // Insere o horário no banco de dados
     connection.query(insertQuery, [configuracoes.horario], (err, results) => {
         if (err) {
-            console.error('Erro ao inserir horario no banco de dados:', err);
+            console.error('Erro ao inserir horário no banco de dados:', err);
             return;
         }
 
@@ -122,7 +133,16 @@ ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
             settingsWindow.close();
         }
     });
+}
+
+// Manipula a mensagem para salvar configurações recebida do front-end
+ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
+    // Chama a função sem aguardar pela resolução da promessa
+    inserirHorarioNoBanco(configuracoes).catch(error => {
+        console.error('Erro ao salvar configurações:', error);
+    });
 });
+
 
 
 // Manipula o evento de fechamento de todas as janelas
