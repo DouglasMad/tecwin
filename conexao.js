@@ -1,39 +1,77 @@
 const {lerArquivo, connectDB, reiniciarBancoAsync, atualizarStatus, obterStatus} = require('./importncm');
 const {apist} = require('./ApiSt');
 const {buscarNCMs} = require('./ApiPis');
+const mysql = require('mysql')
 const fs = require('fs')
 
 
 
-            // Função para atualizar o status no arquivo HTML
-            async function atualizarStatusHTML(apiId, novoStatus) {
-              const filePath = 'C:/Users/Felipe Silva/Desktop/code/tecwin/d10/tecwin/index.html';
-            
-              return new Promise((resolve, reject) => {
-                fs.readFile(filePath, 'utf8', (err, data) => {
-                  if (err) {
-                    console.error('Erro ao ler o arquivo HTML:', err);
-                    reject(err);
-                    return;
-                  }
-            
-                  const novoConteudo = data.replace(
-                    new RegExp(`id="status-${apiId}-api">Status: .*?</div>`),
-                    `id="status-${apiId}-api">Status: ${novoStatus}</div>`
-                  );
-            
-                  fs.writeFile(filePath, novoConteudo, 'utf8', (err) => {
-                    if (err) {
-                      console.error('Erro ao escrever no arquivo HTML:', err);
-                      reject(err);
-                    } else {
-                      console.log(`Status da API ${apiId} atualizado para: ${novoStatus}`);
-                      resolve();
-                    }
-                  });
-                });
-              });
-            }
+// Função para atualizar o status no arquivo HTML
+async function atualizarStatusHTML(apiId, novoStatus) {
+  const filePath = 'C:/Users/Felipe Silva/Desktop/code/tecwin/d10/tecwin/index.html';
+
+  return new Promise((resolve, reject) => {
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        console.error('Erro ao ler o arquivo HTML:', err);
+        reject(err);
+        return;
+      }
+
+      const novoConteudo = data.replace(
+        new RegExp(`id="status-${apiId}-api">Status: .*?</div>`),
+        `id="status-${apiId}-api">Status: ${novoStatus}</div>`
+      );
+
+      fs.writeFile(filePath, novoConteudo, 'utf8', (err) => {
+        if (err) {
+          console.error('Erro ao escrever no arquivo HTML:', err);
+          reject(err);
+        } else {
+          console.log(`Status da API ${apiId} atualizado para: ${novoStatus}`);
+          resolve();
+        }
+      });
+    });
+  });
+}
+
+function exportarDadosParaTXTSync(callback) {
+  const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'db_ncm'
+  });
+
+  connection.connect((connectError) => {
+    if (connectError) {
+      callback(connectError);
+      return;
+    }
+
+    connection.query('SELECT * FROM tec_produto', (queryError, rows) => {
+      if (queryError) {
+        connection.end();
+        callback(queryError);
+        return;
+      }
+
+      const fileName = 'todos_os_dados.txt';
+      const fileContent = rows.map(row => Object.values(row).join(';')).join('\n');
+
+      fs.writeFile(fileName, fileContent, (writeError) => {
+        connection.end();
+        if (!writeError) {
+          callback(null, `Arquivo ${fileName} gerado com sucesso.`);
+        } else {
+          callback(writeError);
+        }
+      });
+    });
+  });
+}
+
 
 // Função para atualizar o console no arquivo HTML
 async function atualizarConsoleHTML(apiId, novoStatus) {
@@ -65,13 +103,13 @@ async function atualizarConsoleHTML(apiId, novoStatus) {
   });
 }
 
-            async function reiniciarAplicacao() {
-              // Configurar status inicial no HTML
-              await atualizarStatusHTML('primeira', 'Aguardando execução');
-              await atualizarStatusHTML('segunda', 'Aguardando execução');
-              await atualizarStatusHTML('terceira', 'Aguardando execução');
-              await atualizarConsoleHTML('terceira', 'Aguardando iniciar execução');
-            }
+async function reiniciarAplicacao() {
+  // Configurar status inicial no HTML
+  await atualizarStatusHTML('primeira', 'Aguardando execução');
+  await atualizarStatusHTML('segunda', 'Aguardando execução');
+  await atualizarStatusHTML('terceira', 'Aguardando execução');
+  await atualizarConsoleHTML('terceira', 'Aguardando iniciar execução');
+}
 
 
 
@@ -118,6 +156,13 @@ async function execConect() {
             await atualizarStatus(db, 'Terceira API', 'concluido');
             await atualizarStatusHTML('terceira', 'Concluido');
             await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
+            exportarDadosParaTXTSync((error, successMessage) => {
+              if (error) {
+                console.error('Erro ao exportar dados para o arquivo TXT:', error);
+              } else {
+                console.log(successMessage);
+              }
+            });
           }
 
 

@@ -58,7 +58,7 @@ async function obterStatus(db, etapa) {
 
 
 
-
+//Função para reiniciar tabela tec_produtos ao iniciar aplicação
 async function reiniciarBancoAsync(db) {
     return new Promise((resolve, reject) => {
         const sql = 'TRUNCATE TABLE tec_produto;';
@@ -73,7 +73,7 @@ async function reiniciarBancoAsync(db) {
     });
 }
 
-
+//Função para inserir produto no tec_produto
 const inserirProduto = (db, codigo, ncm) => {
     return new Promise((resolve, reject) => {
         // Certifique-se de que o NCM está definido e remova os pontos
