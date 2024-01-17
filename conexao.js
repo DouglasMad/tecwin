@@ -57,7 +57,11 @@ function exportarDadosParaTXTSync(callback) {
         return;
       }
 
-      const fileName = 'todos_os_dados.txt';
+
+      const currentDate = new Date();
+      const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
+    
+      const fileName = `todos_os_dados_${formattedDate}.txt`;
       const fileContent = rows.map(row => Object.values(row).join(';')).join('\n');
 
       fs.writeFile(fileName, fileContent, (writeError) => {
