@@ -12,7 +12,8 @@ const dbConfig = {
     host: 'localhost',
     user: 'root',
     password: '123456',
-    database: 'db_ncm'
+    database: 'db_ncm',
+    port: '3306'
 };
 
 // Query para inserir horário no banco de dados

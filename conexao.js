@@ -8,7 +8,7 @@ const fs = require('fs')
 
 // Função para atualizar o status no arquivo HTML
 async function atualizarStatusHTML(apiId, novoStatus) {
-  const filePath = 'C:/Users/Felipe Silva/Desktop/code/tecwin/d10/tecwin/index.html';
+  const filePath = 'C:/Users/Fellipe Silva/OneDrive/Área de Trabalho/code/tecwin/d10/tecwin/index.html';
 
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -28,7 +28,7 @@ async function atualizarStatusHTML(apiId, novoStatus) {
           console.error('Erro ao escrever no arquivo HTML:', err);
           reject(err);
         } else {
-          console.log(`Status da API ${apiId} atualizado para: ${novoStatus}`);
+          console.log(`Status da API ${apiId} atualizado para: ${novoStatus}`); 
           resolve();
         }
       });
@@ -61,7 +61,7 @@ function exportarDadosParaTXTSync(callback) {
       const currentDate = new Date();
       const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
     
-      const fileName = `todos_os_dados_${formattedDate}.txt`;
+      const fileName = `backup${formattedDate}.txt`;
       const fileContent = rows.map(row => Object.values(row).join(';')).join('\n');
 
       fs.writeFile(fileName, fileContent, (writeError) => {
@@ -79,7 +79,7 @@ function exportarDadosParaTXTSync(callback) {
 
 // Função para atualizar o console no arquivo HTML
 async function atualizarConsoleHTML(apiId, novoStatus) {
-  const filePath = 'C:/Users/Felipe Silva/Desktop/code/tecwin/d10/tecwin/index.html';
+  const filePath = 'C:/Users/Fellipe Silva/OneDrive/Área de Trabalho/code/tecwin/d10/tecwin/index.html';
 
   return new Promise((resolve, reject) => {
       fs.readFile(filePath, 'utf8', (err, data) => {

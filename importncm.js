@@ -107,7 +107,7 @@ const lerArquivo = async () => {
     try {
         const db = await connectDB();
 
-        const data = await fs.readFile('C://Users//Felipe Silva//Desktop//code//tecwin//tecwinncm.txt', 'utf8');
+        const data = await fs.readFile('C:/Users/Fellipe Silva/OneDrive/Área de Trabalho/code/tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
 
         for (let linha of linhas) {
@@ -121,6 +121,7 @@ const lerArquivo = async () => {
         console.error(err);
     }
 };
+
 
 module.exports = { 
     lerArquivo,
