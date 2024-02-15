@@ -4,14 +4,16 @@ const path = require('path');
 const mysql = require('mysql');
 const cron = require('node-cron');
 const moment = require('moment');
-const { execConect } = require('./conexao'); // Suponho que 'conexao' seja um módulo personalizado
+const { execConect, atualizarConsoleHTML, atualizarStatusHTML, reiniciarAplicacao } = require('./conexao');
+const {reiniciarBancoAsync, connectDB} = require('./importncm')
 
 // Configurações do banco de dados
 const dbConfig = {
     host: 'localhost',
     user: 'root',
     password: '123456',
-    database: 'db_ncm'
+    database: 'db_ncm',
+    port: '3306'
 };
 
 // Query para inserir horário no banco de dados
@@ -20,6 +22,17 @@ const insertQuery = 'INSERT INTO tec_hora (horaexecute) VALUES (?)';
 // Função para criar uma conexão com o banco de dados
 function conexaoDb() {
     return mysql.createConnection(dbConfig);
+}
+
+//Função para reiniciar IMPORTAÇÕES 
+async function iniciarApp () {
+    const db = await connectDB()
+    try {
+        await reiniciarBancoAsync(db);
+        console.log('Banco de dados reiniciado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao reiniciar banco de dados: ', error)
+    }
 }
 
 // Variáveis globais
@@ -42,6 +55,10 @@ app.whenReady().then(() => {
     tray.on('click', () => {
         abrirConfigurador();
     });
+
+    // Configuração inicial de status no HTML e no console
+    reiniciarAplicacao();
+    iniciarApp();
 });
 
 // Função para abrir a janela de configurações
@@ -68,12 +85,33 @@ function abrirConfigurador() {
     }
 }
 
-// Manipula a mensagem para salvar configurações recebida do front-end
-ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
+process.on('SIGINT', () => {
+    if (mainWindow) {
+        // Fecha a janela principal
+        mainWindow.close();
+    }
+
+    // Reinicia a aplicação
+    app.relaunch();
+    app.quit();
+});
+
+
+// Função para limpar horário no banco de dados
+async function limparBancoHorario() {
+    const sql = 'TRUNCATE TABLE tec_hora;';
+    await connection.query(sql);
+}
+
+// Função para inserir um novo horário no banco de dados
+async function inserirHorarioNoBanco(configuracoes) {
+    // Limpa tabela de horários antes de inserir novo horário
+    await limparBancoHorario();
+
     // Insere o horário no banco de dados
     connection.query(insertQuery, [configuracoes.horario], (err, results) => {
         if (err) {
-            console.error('Erro ao inserir horario no banco de dados:', err);
+            console.error('Erro ao inserir horário no banco de dados:', err);
             return;
         }
 
@@ -81,11 +119,12 @@ ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
 
         // Converte o horário para uma expressão cron e agenda a tarefa
         const expressaoCron = moment(configuracoes.horario, 'HH:mm:ss').format('s m H * * *');
+
         try {
             cron.schedule(expressaoCron, () => {
                 console.log('Executando script', configuracoes.horario);
                 execConect();
-            });            
+            });
         } catch (error) {
             console.error('Erro ao agendar cron:', error);
         }
@@ -95,7 +134,17 @@ ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
             settingsWindow.close();
         }
     });
+}
+
+// Manipula a mensagem para salvar configurações recebida do front-end
+ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
+    // Chama a função sem aguardar pela resolução da promessa
+    inserirHorarioNoBanco(configuracoes).catch(error => {
+        console.error('Erro ao salvar configurações:', error);
+    });
 });
+
+
 
 // Manipula o evento de fechamento de todas as janelas
 app.on('window-all-closed', () => {

@@ -1,7 +1,7 @@
 const fs = require('fs').promises;
 const mysql = require('mysql');
+const { promisify } = require('util');
 
-// Função para conectar ao banco de dados
 const connectDB = () => {
     return new Promise((resolve, reject) => {
         const db = mysql.createConnection({
@@ -22,10 +22,46 @@ const connectDB = () => {
     });
 };
 
-// Função para reiniciar o banco de dados (TRUNCATE)
-const reiniciarBanco = (db) => {
+
+//Função para atualizar
+async function atualizarStatus(db, etapa, status) {
     return new Promise((resolve, reject) => {
-        const sql = 'TRUNCATE TABLE tec_produto; ALTER TABLE tec_produto AUTO_INCREMENT = 1;';
+        const query = `INSERT INTO execucao_status (etapa, status) VALUES ('${etapa}', '${status}')
+                    ON DUPLICATE KEY UPDATE status = VALUES(status)`;
+        db.query(query, [etapa, status], (err) => {
+            if(err) {
+                reject(err);
+            } else{
+                resolve();
+            }
+        });
+    });
+};
+
+
+//Função para Obter
+async function obterStatus(db, etapa) {
+    return new Promise((resolve, reject) => {
+        const query = `SELECT status FROM execucao_status WHERE etapa = '${etapa}'`;
+
+        db.query(query, (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                // Verifica se há resultados antes de acessar a propriedade 'status'
+                const status = results.length > 0 ? results[0].status : null;
+                resolve(status);
+            }
+        });
+    });
+}
+
+
+
+//Função para reiniciar tabela tec_produtos ao iniciar aplicação
+async function reiniciarBancoAsync(db) {
+    return new Promise((resolve, reject) => {
+        const sql = 'TRUNCATE TABLE tec_produto;';
         db.query(sql, (err) => {
             if (err) {
                 reject(err);
@@ -35,9 +71,9 @@ const reiniciarBanco = (db) => {
             }
         });
     });
-};
+}
 
-// Função para inserir os dados no banco
+//Função para inserir produto no tec_produto
 const inserirProduto = (db, codigo, ncm) => {
     return new Promise((resolve, reject) => {
         // Certifique-se de que o NCM está definido e remova os pontos
@@ -59,20 +95,20 @@ const inserirProduto = (db, codigo, ncm) => {
                     }
                 });
             } else {
-                console.log(`Produto com código ${codigo} já existe no banco de dados.p`);
+                console.log(`Produto com código ${codigo} já existe no banco de dados.`);
                 resolve();
             }
         });
     });
 };
 
-// Função para ler o arquivo txt
+
 const lerArquivo = async () => {
     try {
-        await reiniciarBanco()
-        const data = await fs.readFile('C://Users//Felipe Silva//Desktop//code//tecwin//tecwinncm.txt', 'utf8');
-        const linhas = data.split('\n');
         const db = await connectDB();
+
+        const data = await fs.readFile('C:/Users/Fellipe Silva/OneDrive/Área de Trabalho/code/tecwinncm.txt', 'utf8');
+        const linhas = data.split('\n');
 
         for (let linha of linhas) {
             const [codigo, ncm] = linha.split('|');
@@ -87,4 +123,11 @@ const lerArquivo = async () => {
 };
 
 
-module.exports = {lerArquivo}
+module.exports = { 
+    lerArquivo,
+    connectDB,
+    reiniciarBancoAsync,
+    atualizarStatus,
+    obterStatus,
+    
+};
