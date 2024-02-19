@@ -1,147 +1,117 @@
 const fs = require('fs');
 const mysql = require('mysql');
 
-function exportarDadosParaTXTSync(callback) {
-    const connection = mysql.createConnection({
-        host: 'localhost',
-        user: 'root',
-        password: '123456',
-        database: 'db_ncm'
-    });
+const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'db_ncm'
+});
 
-    connection.connect((connectError) => {
-        if (connectError) {
-            callback(connectError);
-            return;
-        }
+connection.connect((connectError) => {
+    if (connectError) {
+        console.error('Erro ao conectar ao banco de dados:', connectError);
+        return;
+    }
+});
 
-        const currentDate = new Date();
-        const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
-        const fileName = `backup${formattedDate}.txt`;
-
-        let fileContent = '';
-
-        // Primeira linha
-        connection.query('SELECT codigo, nmproduto, unidade FROM tec_produto', (queryError, rows) => {
+// Função para consultar os produtos
+async function consultarProdutos(connection) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT codigo, nmproduto, unidade, ncm FROM tec_produto', (queryError, rows) => {
             if (queryError) {
-                connection.end();
-                callback(queryError);
+                reject(queryError);
                 return;
             }
-
-            fileContent += rows.map(row => {
-                const codigo = row.codigo;
-                const nomeProduto = row.nmproduto;
-                const unidadeMedida = row.unidade;
-                return `P|${codigo}|${nomeProduto}|${unidadeMedida}`;
-            }).join('\n');
-
-            // Consulta para PIS/PASEP
-            connection.query('SELECT * FROM tec_ipi WHERE pis_pasep IS NOT NULL', (pisQueryError, pisRows) => {
-                if (pisQueryError) {
-                    connection.end();
-                    callback(pisQueryError);
-                    return;
-                }
-
-                pisRows.forEach(row => {
-                    const tipoLinha = 'S';
-                    const filial = 0;
-                    const tipoTributo = 'P'; // Representando PIS/PASEP
-                    const tipoOperacao = 'S'; // Saída
-                    const cest = row.cest ? row.cest : ''; // Verifica se o CEST está definido
-                    const aliquota = row.pis_pasep; // Obtém a alíquota do PIS/PASEP
-
-                    fileContent += `\n${tipoLinha}|${filial}|${tipoTributo}|${tipoOperacao}|${cest}|${aliquota}`;
-                });
-
-                // Consulta para COFINS
-                connection.query('SELECT * FROM tec_ipi WHERE cofins IS NOT NULL', (cofinsQueryError, cofinsRows) => {
-                    if (cofinsQueryError) {
-                        connection.end();
-                        callback(cofinsQueryError);
-                        return;
-                    }
-
-                    cofinsRows.forEach(row => {
-                        const tipoLinha = 'S';
-                        const filial = 0;
-                        const tipoTributo = 'C'; // Representando COFINS
-                        const tipoOperacao = 'S'; // Saída
-                        const cest = row.cest ? row.cest : ''; // Verifica se o CEST está definido
-                        const aliquota = row.cofins; // Obtém a alíquota do COFINS
-
-                        fileContent += `\n${tipoLinha}|${filial}|${tipoTributo}|${tipoOperacao}|${cest}|${aliquota}`;
-                    });
-                
-                    // Consulta para IPI
-                    connection.query('SELECT * FROM tec_ipi WHERE ipi IS NOT NULL', (ipiQueryError, ipiRows) => {
-                        if (ipiQueryError) {
-                            connection.end();
-                            callback(ipiQueryError);
-                            return;
-                        }
-                        ipiRows.forEach(row => {
-                            const tipoLinha = 'H'; // Representando IPI
-                            const filial = 0;
-                            const cest = row.cest ? row.cest : ''; // Verifica se o CEST está definido
-                            const aliquota = row.ipi; // Obtém a alíquota do IPI
-                            fileContent += `\n${tipoLinha}|${filial}|${cest}|${aliquota}`;
-                        });
-
-                        // Consulta para ICMS/ST
-                        connection.query('SELECT * FROM st_ncm', (icmsQueryError, icmsRows) => {
-                            if (icmsQueryError) {
-                                connection.end();
-                                callback(icmsQueryError);
-                                return;
-                            }
-                        
-                            // Para cada produto
-                            rows.forEach(row => {
-                                // Filtrar os registros de ICMS/ST relacionados à UF do produto
-                                const ufProduto = row.uf; // UF do produto
-                                const icmsRowsRelated = icmsRows.filter(icmsRow => icmsRow.ufRemetente === ufProduto);
-                                
-                                // Verificar se há registros relacionados ao produto
-                                if (icmsRowsRelated.length > 0) {
-                                    icmsRowsRelated.forEach(icmsRow => {
-                                        const tipoLinha = 'I'; // Representando ICMS/ST
-                                        const tipoOperacao = 'S'; // Saída
-                                        const filial = 0;
-                                        const uf = icmsRow.ufRemetente;
-                                        const mva = icmsRow.mvaOriginal;
-                                        const aliquota = icmsRow.aliquotaEfetiva;
-                        
-                                        fileContent += `\n${tipoLinha}|${tipoOperacao}|${filial}|${uf}|${mva}|${aliquota}`;
-                                    });
-                                } else {
-                                    // Se não houver registros relacionados, adicionar uma linha vazia para indicar isso
-                                    const tipoLinha = 'I'; // Representando ICMS/ST
-                                    const tipoOperacao = 'S'; // Saída
-                                    const filial = 0;
-                                    const mva = ''; // MVA não definido
-                                    const aliquota = ''; // Alíquota não definida
-                        
-                                    fileContent += `\n${tipoLinha}|${tipoOperacao}|${filial}|${ufProduto}|${mva}|${aliquota}`;
-                                }
-                            });
-
-                            // Escrever no arquivo
-                            fs.writeFile(fileName, fileContent, (writeError) => {
-                                connection.end();
-                                if (!writeError) {
-                                    callback(null, `Arquivo ${fileName} gerado com sucesso.`);
-                                } else {
-                                    callback(writeError);
-                                }
-                            });
-                        });
-                    });
-                });
-            });
+            resolve(rows);
         });
     });
+}
+
+// Função para consultar PIS/PASEP por NCM
+async function consultarPisPasepPorNcm(connection, ncm) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT * FROM tec_ipi WHERE ncm_codigo = ? AND pis_pasep IS NOT NULL', [ncm], (pisQueryError, pisRows) => {
+            if (pisQueryError) {
+                reject(pisQueryError);
+                return;
+            }
+            resolve(pisRows);
+        });
+    });
+}
+
+// Função para consultar COFINS por NCM
+async function consultarCofinsPorNcm(connection, ncm) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT * FROM tec_ipi WHERE ncm_codigo = ? AND cofins IS NOT NULL', [ncm], (cofinsQueryError, cofinsRows) => {
+            if (cofinsQueryError) {
+                reject(cofinsQueryError);
+                return;
+            }
+            resolve(cofinsRows);
+        });
+    });
+}
+
+// Função para consultar ICMS/ST por NCM
+async function consultarIcmsStPorNcm(connection, ncm) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT ufDestinatario, mvaOriginal, aliquotaEfetiva FROM st_ncm WHERE ncmid = ?', [ncm], (icmsQueryError, icmsRows) => {
+            if (icmsQueryError) {
+                reject(icmsQueryError);
+                return;
+            }
+            resolve(icmsRows);
+        });
+    });
+}
+
+
+// Função principal para exportar dados para o arquivo TXT
+async function exportarDadosParaTXTSync(callback) {
+    const currentDate = new Date();
+    const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
+    const fileName = `backup${formattedDate}.txt`;
+
+    let fileContent = '';
+
+    try {
+        const produtos = await consultarProdutos(connection);
+
+        for (const produto of produtos) {
+            fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
+        
+            const pisPasep = await consultarPisPasepPorNcm(connection, produto.ncm);
+            pisPasep.forEach(row => {
+                const { cest, pis_pasep } = row;
+                fileContent += `S|0|P|S|${cest ? cest : ''}|${pis_pasep}\n`;
+            });
+        
+            const cofins = await consultarCofinsPorNcm(connection, produto.ncm);
+            cofins.forEach(row => {
+                const { cest, cofins } = row;
+                fileContent += `S|0|C|S|${cest ? cest : ''}|${cofins}\n`;
+            });
+        
+            const icmsSt = await consultarIcmsStPorNcm(connection, produto.ncm);
+            icmsSt.forEach(row => {
+                const { ufDestinatario, mvaOriginal, aliquotaEfetiva } = row;
+                fileContent += `I|S|0|${ufDestinatario}|${mvaOriginal}|${aliquotaEfetiva}\n`;
+            });
+        }
+        
+
+        fs.writeFile(fileName, fileContent, (writeError) => {
+            if (!writeError) {
+                callback(null, `Arquivo ${fileName} gerado com sucesso.`);
+            } else {
+                callback(writeError);
+            }
+        });
+    } catch (error) {
+        callback(error);
+    }
 }
 
 exportarDadosParaTXTSync((error, successMessage) => {
