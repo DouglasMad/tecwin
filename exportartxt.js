@@ -81,7 +81,7 @@ async function exportarDadosParaTXTSync(callback) {
 
         for (const produto of produtos) {
             fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
-        
+            
             const pisPasep = await consultarPisPasepPorNcm(connection, produto.ncm);
             pisPasep.forEach(row => {
                 const { cest, pis_pasep } = row;
@@ -93,6 +93,9 @@ async function exportarDadosParaTXTSync(callback) {
                 const { cest, cofins } = row;
                 fileContent += `S|0|C|S|${cest ? cest : ''}|${cofins}\n`;
             });
+
+            //FALTA CONFIGURAR CEST E IPI NO LUGAR DO PRODUTO.NCM
+            fileContent += `H|0|cest|${produto.ncm}|\n`;
         
             const icmsSt = await consultarIcmsStPorNcm(connection, produto.ncm);
             icmsSt.forEach(row => {
