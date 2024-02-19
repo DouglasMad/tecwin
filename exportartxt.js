@@ -80,30 +80,33 @@ async function exportarDadosParaTXTSync(callback) {
         const produtos = await consultarProdutos(connection);
 
         for (const produto of produtos) {
-            fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
-            
             const pisPasep = await consultarPisPasepPorNcm(connection, produto.ncm);
-            pisPasep.forEach(row => {
-                const { cest, pis_pasep } = row;
-                fileContent += `S|0|P|S|${cest ? cest : ''}|${pis_pasep}\n`;
-            });
-        
             const cofins = await consultarCofinsPorNcm(connection, produto.ncm);
-            cofins.forEach(row => {
-                const { cest, cofins } = row;
-                fileContent += `S|0|C|S|${cest ? cest : ''}|${cofins}\n`;
-            });
-
-            //FALTA CONFIGURAR CEST E IPI NO LUGAR DO PRODUTO.NCM
-            fileContent += `H|0|cest|${produto.ncm}|\n`;
-        
             const icmsSt = await consultarIcmsStPorNcm(connection, produto.ncm);
-            icmsSt.forEach(row => {
-                const { ufDestinatario, mvaOriginal, aliquotaEfetiva } = row;
-                fileContent += `I|S|0|${ufDestinatario}|${mvaOriginal}|${aliquotaEfetiva}\n`;
-            });
+
+            // Verifica se há dados correspondentes nas consultas de PIS/PASEP, COFINS e ICMS/ST
+            if (pisPasep.length > 0 && cofins.length > 0 && icmsSt.length > 0) {
+                // Adiciona as linhas P e H apenas se houver dados correspondentes nas consultas
+                fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
+
+                pisPasep.forEach(row => {
+                    const { cest, pis_pasep } = row;
+                    fileContent += `S|0|P|S|${cest ? cest : ''}|${pis_pasep}\n`;
+                });
+
+                cofins.forEach(row => {
+                    const { cest, cofins } = row;
+                    fileContent += `S|0|C|S|${cest ? cest : ''}|${cofins}\n`;
+                });
+                
+                fileContent += `H|0|cest|${produto.ncm}\n`;
+
+                icmsSt.forEach(row => {
+                    const { ufDestinatario, mvaOriginal, aliquotaEfetiva } = row;
+                    fileContent += `I|S|0|${ufDestinatario}|${mvaOriginal}|${aliquotaEfetiva}\n`;
+                });
+            }
         }
-        
 
         fs.writeFile(fileName, fileContent, (writeError) => {
             if (!writeError) {
@@ -116,6 +119,7 @@ async function exportarDadosParaTXTSync(callback) {
         callback(error);
     }
 }
+
 
 exportarDadosParaTXTSync((error, successMessage) => {
     if (error) {
