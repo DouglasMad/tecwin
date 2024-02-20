@@ -6,7 +6,7 @@ async function fazerRequisicaoAPI() {
     const cliente = '02119874';
     const formato = 'json';
 
-    const url = (`https://ics.multieditoras.com.br/ics/tec/${ncm}?chave=${chave}&cliente=${cliente}`);
+    const url = (`https://ics.multieditoras.com.br/ics/pis?chave=${chave}&cliente=${cliente}&ncm=${ncm}`);
     try {
         const response = await axios.get(url);
         const data = response.data;
