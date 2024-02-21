@@ -9,32 +9,36 @@ const db = mysql.createConnection({
     database: 'db_ncm'
 });
 
-// Conectar ao banco de dados
 db.connect(err => {
     if (err) {
-        return console.error('Erro ao conectar ao banco de dados:', err);
+        console.error('Erro ao conectar ao banco de dados:', err);
+        return;
     }
     console.log('Conexão com o banco de dados estabelecida com sucesso.');
 
-    // Consultar a tabela tec_produto para obter o NCM
-    db.query('SELECT ncm FROM tec_produto LIMIT 1', async (err, result) => {
+    // Consultar a tabela tec_produto para obter todos os NCMs
+    db.query('SELECT ncm FROM tec_produto', async (err, results) => {
         if (err) {
-            return console.error('Erro ao consultar a tabela tec_produto:', err);
+            console.error('Erro ao consultar a tabela tec_produto:', err);
+            return;
         }
-        if (result.length > 0) {
-            const ncm = result[0].ncm;
-            await fazerRequisicaoAPI(ncm); // Chamar a função para fazer a requisição API com o NCM obtido
-        } else {
-            console.log('Nenhum NCM encontrado na tabela tec_produto.');
+
+        for (let i = 0; i < results.length; i++) {
+            try {
+                await processarNCM(results[i].ncm);
+            } catch (error) {
+                console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error);
+                // Continua para o próximo NCM mesmo que encontre um erro
+            }
         }
+
+        console.log('Processamento de todos os NCMs concluído.');
     });
 });
 
-async function fazerRequisicaoAPI(ncm) {
+async function processarNCM(ncm) {
     const chave = 'TFACS-Q4LVT-XYYNF-ZNW59';
     const cliente = '02119874';
-    const formato = 'json';
-
     const url = `https://ics.multieditoras.com.br/ics/pis?chave=${chave}&cliente=${cliente}&ncm=${ncm}`;
 
     try {
@@ -44,12 +48,13 @@ async function fazerRequisicaoAPI(ncm) {
         const resultadoFiltrado = data.pis.filter(regra => regra.nomeRegra === "Alíquota Básica - Não Cumulativo vendendo para não cumulativo");
 
         if (resultadoFiltrado.length > 0) {
-            const regra = resultadoFiltrado[0]; // Assumindo que queremos inserir apenas o primeiro resultado encontrado
+            const regra = resultadoFiltrado[0];
             // Verificar se já existe um registro com o mesmo idMercadoria
             const sqlVerificacao = 'SELECT * FROM tec_Pisdeb WHERE idMercadoria = ?';
             db.query(sqlVerificacao, [regra.idMercadoria], (err, result) => {
                 if (err) {
-                    return console.error('Erro ao verificar o idMercadoria na tabela tec_Pisdeb:', err);
+                    console.error('Erro ao verificar o idMercadoria na tabela tec_Pisdeb:', err);
+                    return;
                 }
 
                 if (result.length === 0) {
@@ -81,7 +86,8 @@ async function fazerRequisicaoAPI(ncm) {
 
                     db.query(sqlInsercao, valuesInsercao, (err, result) => {
                         if (err) {
-                            return console.error('Erro ao inserir dados na tabela tec_Pisdeb:', err);
+                            console.error('Erro ao inserir dados na tabela tec_Pisdeb:', err);
+                            return;
                         }
                         console.log('Dados inseridos na tabela tec_Pisdeb com sucesso. ID:', result.insertId);
                     });
@@ -90,9 +96,9 @@ async function fazerRequisicaoAPI(ncm) {
                 }
             });
         } else {
-            console.log('Nenhuma regra corresponde ao critério de filtro.');
+            console.log('Nenhuma regra encontrada para o NCM:', ncm);
         }
     } catch (error) {
-        console.error('Erro ao fazer a chamada API:', error);
+        throw error; // Lança o erro para ser capturado pelo try/catch do loop
     }
 }
