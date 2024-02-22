@@ -28,6 +28,19 @@ async function consultarProdutos(connection) {
     });
 }
 
+//consultar aliquota
+async function consultarAliquitaPorNcm(connection, ncm) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT ipi FROM tec_ipi WHERE ncm_codigo = ? LIMIT 1', [ncm], (queryError, rows) => {
+            if (queryError) {
+                reject(queryError);
+                return;
+            }
+            resolve(rows);
+        });
+    });
+}
+
 // Função para consultar PIS/PASEP por NCM
 async function consultarPisPasepPorNcm(connection, ncm) {
     return new Promise((resolve, reject) => {
@@ -83,6 +96,7 @@ async function exportarDadosParaTXTSync(callback) {
             const pisPasep = await consultarPisPasepPorNcm(connection, produto.ncm);
             const cofins = await consultarCofinsPorNcm(connection, produto.ncm);
             const icmsSt = await consultarIcmsStPorNcm(connection, produto.ncm);
+            const aliquota = await consultarAliquitaPorNcm(connection, produto.ncm);
 
             // Verifica se há dados correspondentes nas consultas de PIS/PASEP, COFINS e ICMS/ST
             if (pisPasep.length > 0 && cofins.length > 0 && icmsSt.length > 0) {
@@ -98,8 +112,11 @@ async function exportarDadosParaTXTSync(callback) {
                     const { cst, cofinsDebito } = row;
                     fileContent += `S|0|C|S|${cst ? cst : ''}|${cofinsDebito}\n`;
                 });
-                
-                fileContent += `H|0|cest|${produto.ncm}\n`;
+
+                aliquota.forEach(row => {
+                    const {ipi} = row;
+                    fileContent += `H|0|cest|${ipi}\n`;
+                })
 
                 icmsSt.forEach(row => {
                     const { ufDestinatario, mvaOriginal, aliquotaEfetiva } = row;
