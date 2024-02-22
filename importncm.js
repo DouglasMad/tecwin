@@ -23,8 +23,6 @@ const connectDB = () => {
     });
 };
 
-
-//Função para atualizar
 async function atualizarStatus(db, etapa, status) {
     return new Promise((resolve, reject) => {
         const query = `INSERT INTO execucao_status (etapa, status) VALUES ('${etapa}', '${status}')
@@ -39,8 +37,6 @@ async function atualizarStatus(db, etapa, status) {
     });
 };
 
-
-//Função para Obter
 async function obterStatus(db, etapa) {
     return new Promise((resolve, reject) => {
         const query = `SELECT status FROM execucao_status WHERE etapa = '${etapa}'`;
@@ -49,7 +45,6 @@ async function obterStatus(db, etapa) {
             if (error) {
                 reject(error);
             } else {
-                // Verifica se há resultados antes de acessar a propriedade 'status'
                 const status = results.length > 0 ? results[0].status : null;
                 resolve(status);
             }
@@ -57,9 +52,6 @@ async function obterStatus(db, etapa) {
     });
 }
 
-
-
-//Função para reiniciar tabela tec_produtos ao iniciar aplicação
 async function reiniciarBancoAsync(db) {
     return new Promise((resolve, reject) => {
         const sql = 'TRUNCATE TABLE tec_produto;';
@@ -74,21 +66,17 @@ async function reiniciarBancoAsync(db) {
     });
 }
 
-///Função para inserir produto no tec_produto
-const inserirProduto = (db, codigo, ncm, nomeProduto, unidadeMedida) => {
+const inserirProduto = (db, codigo, ncm, nomeProduto, unidadeMedida, cstipi) => {
     return new Promise((resolve, reject) => {
-        // Certifique-se de que o NCM está definido e remova os pontos
         const ncmSemPontos = ncm ? ncm.replace(/\./g, '') : '';
 
         db.query('SELECT * FROM tec_produto WHERE codigo = ?', [codigo], (err, result) => {
             if (err) {
                 console.error('Erro ao verificar a existência do produto:', err);
                 reject(err);
-            }
-
-            if (result.length === 0) {
-                const sql = 'INSERT INTO tec_produto (codigo, ncm, nmproduto, unidade) VALUES (?, ?, ?, ?)';
-                db.query(sql, [codigo, ncmSemPontos, nomeProduto, unidadeMedida], (err) => {
+            } else if (result.length === 0) {
+                const sql = 'INSERT INTO tec_produto (codigo, ncm, nmproduto, unidade, cstipi) VALUES (?, ?, ?, ?, ?)';
+                db.query(sql, [codigo, ncmSemPontos, nomeProduto, unidadeMedida, cstipi], (err) => {
                     if (err) {
                         console.error('Erro ao inserir o produto:', err);
                         reject(err);
@@ -105,7 +93,6 @@ const inserirProduto = (db, codigo, ncm, nomeProduto, unidadeMedida) => {
     });
 };
 
-
 const lerArquivo = async () => {
     try {
         const db = await connectDB();
@@ -118,26 +105,25 @@ const lerArquivo = async () => {
         console.log(`Encontradas ${linhas.length} linhas no arquivo.`);
 
         for (let linha of linhas) {
-            const [codigo, ncm, nomeProduto, unidadeMedida] = linha.split('|');
+            const [codigo, ncm, nomeProduto, unidadeMedida, cstipi] = linha.split('|');
             console.log(`Processando linha: ${linha}`);
-            await inserirProduto(db, codigo, ncm, nomeProduto, unidadeMedida);
+            await inserirProduto(db, codigo, ncm, nomeProduto, unidadeMedida, cstipi);
         }
 
         console.log('Finalizado.');
 
-        // Fechar a conexão com o banco de dados após a conclusão
         db.end();
     } catch (err) {
         console.error('Erro durante a execução:', err);
     }
 };
-lerArquivo(); 
 
-module.exports = { 
+lerArquivo();
+
+module.exports = {
     lerArquivo,
     connectDB,
     reiniciarBancoAsync,
     atualizarStatus,
     obterStatus,
-    
 };
