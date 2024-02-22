@@ -115,7 +115,7 @@ async function exportarDadosParaTXTSync(callback) {
 
                 aliquota.forEach(row => {
                     const {ipi} = row;
-                    fileContent += `H|0|cest|${ipi}\n`;
+                    // fileContent += `H|0|${ipi}|CST\n`; NAO TEM IPI NO MOMENTO, POR ISSO ESTÁ SEM A FUNCIONALIDADE
                 })
 
                 icmsSt.forEach(row => {
