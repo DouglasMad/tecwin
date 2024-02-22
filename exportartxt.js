@@ -31,7 +31,7 @@ async function consultarProdutos(connection) {
 // Função para consultar PIS/PASEP por NCM
 async function consultarPisPasepPorNcm(connection, ncm) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT * FROM tec_ipi WHERE ncm_codigo = ? AND pis_pasep IS NOT NULL', [ncm], (pisQueryError, pisRows) => {
+        connection.query('SELECT * FROM tec_pisdeb WHERE ncm = ? AND pisDebito IS NOT NULL', [ncm], (pisQueryError, pisRows) => {
             if (pisQueryError) {
                 reject(pisQueryError);
                 return;
@@ -44,7 +44,7 @@ async function consultarPisPasepPorNcm(connection, ncm) {
 // Função para consultar COFINS por NCM
 async function consultarCofinsPorNcm(connection, ncm) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT * FROM tec_ipi WHERE ncm_codigo = ? AND cofins IS NOT NULL', [ncm], (cofinsQueryError, cofinsRows) => {
+        connection.query('SELECT * FROM tec_pisdeb WHERE ncm = ? AND cofinsDebito IS NOT NULL', [ncm], (cofinsQueryError, cofinsRows) => {
             if (cofinsQueryError) {
                 reject(cofinsQueryError);
                 return;
@@ -90,13 +90,13 @@ async function exportarDadosParaTXTSync(callback) {
                 fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
 
                 pisPasep.forEach(row => {
-                    const { cest, pis_pasep } = row;
-                    fileContent += `S|0|P|S|${cest ? cest : ''}|${pis_pasep}\n`;
+                    const { cst, pisDebito } = row;
+                    fileContent += `S|0|P|S|${cst ? cst : ''}|${pisDebito}\n`;
                 });
 
                 cofins.forEach(row => {
-                    const { cest, cofins } = row;
-                    fileContent += `S|0|C|S|${cest ? cest : ''}|${cofins}\n`;
+                    const { cst, cofinsDebito } = row;
+                    fileContent += `S|0|C|S|${cst ? cst : ''}|${cofinsDebito}\n`;
                 });
                 
                 fileContent += `H|0|cest|${produto.ncm}\n`;
@@ -108,6 +108,7 @@ async function exportarDadosParaTXTSync(callback) {
             }
         }
 
+        //GERA TXT NO ARQUIVO DO PROJETO
         fs.writeFile(fileName, fileContent, (writeError) => {
             if (!writeError) {
                 callback(null, `Arquivo ${fileName} gerado com sucesso.`);
