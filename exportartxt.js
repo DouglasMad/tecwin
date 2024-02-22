@@ -28,7 +28,7 @@ async function consultarProdutos(connection) {
     });
 }
 
-//consultar aliquota
+//Função para consulta aliquota por NCM
 async function consultarAliquitaPorNcm(connection, ncm) {
     return new Promise((resolve, reject) => {
         connection.query('SELECT ipi FROM tec_ipi WHERE ncm_codigo = ? LIMIT 1', [ncm], (queryError, rows) => {
@@ -115,7 +115,7 @@ async function exportarDadosParaTXTSync(callback) {
 
                 aliquota.forEach(row => {
                     const {ipi} = row;
-                    fileContent += `H|0|cest|${ipi}\n`;
+                    // fileContent += `H|0|${ipi}|CST\n`; NAO TEM IPI NO MOMENTO, POR ISSO ESTÁ SEM A FUNCIONALIDADE
                 })
 
                 icmsSt.forEach(row => {
