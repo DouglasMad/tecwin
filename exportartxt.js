@@ -18,7 +18,7 @@ connection.connect((connectError) => {
 // Função para consultar os produtos
 async function consultarProdutos(connection) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT codigo, nmproduto, unidade, ncm FROM tec_produto', (queryError, rows) => {
+        connection.query('SELECT codigo, nmproduto, unidade, ncm, cstipi FROM tec_produto', (queryError, rows) => {
             if (queryError) {
                 reject(queryError);
                 return;
@@ -113,10 +113,8 @@ async function exportarDadosParaTXTSync(callback) {
                     fileContent += `S|0|C|S|${cst ? cst : ''}|${cofinsDebito}\n`;
                 });
 
-                aliquota.forEach(row => {
-                    const {ipi} = row;
-                    // fileContent += `H|0|${ipi}|CST\n`; NAO TEM IPI NO MOMENTO, POR ISSO ESTÁ SEM A FUNCIONALIDADE
-                })
+                const {ipi} = aliquota[0];
+                fileContent += `H|0|${ipi}|${produto.cstipi}\n`; 
 
                 icmsSt.forEach(row => {
                     const { ufDestinatario, mvaOriginal, aliquotaEfetiva } = row;
@@ -146,3 +144,5 @@ exportarDadosParaTXTSync((error, successMessage) => {
         console.log(successMessage);
     }
 });
+
+module.exports = exportarDadosParaTXTSync;

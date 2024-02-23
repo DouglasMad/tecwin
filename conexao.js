@@ -1,4 +1,5 @@
 const {lerArquivo, connectDB, reiniciarBancoAsync, atualizarStatus, obterStatus} = require('./importncm');
+const exportarDadosParaTXTSync = require('./exportartxt')
 const {apist} = require('./ApiSt');
 const {buscarNCMs} = require('./ApiPis');
 const mysql = require('mysql')
@@ -36,45 +37,46 @@ async function atualizarStatusHTML(apiId, novoStatus) {
   });
 }
 
-function exportarDadosParaTXTSync(callback) {
-  const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '123456',
-    database: 'db_ncm'
-  });
+//Anulei função para exportar clean de outro arquivo
+// function exportarDadosParaTXTSync(callback) {
+//   const connection = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: '123456',
+//     database: 'db_ncm'
+//   });
 
-  connection.connect((connectError) => {
-    if (connectError) {
-      callback(connectError);
-      return;
-    }
+//   connection.connect((connectError) => {
+//     if (connectError) {
+//       callback(connectError);
+//       return;
+//     }
 
-    connection.query('SELECT * FROM tec_produto', (queryError, rows) => {
-      if (queryError) {
-        connection.end();
-        callback(queryError);
-        return;
-      }
+//     connection.query('SELECT * FROM tec_produto', (queryError, rows) => {
+//       if (queryError) {
+//         connection.end();
+//         callback(queryError);
+//         return;
+//       }
 
 
-      const currentDate = new Date();
-      const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
+//       const currentDate = new Date();
+//       const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
     
-      const fileName = `backup${formattedDate}.txt`;
-      const fileContent = rows.map(row => Object.values(row).join(';')).join('\n');
+//       const fileName = `backup${formattedDate}.txt`;
+//       const fileContent = rows.map(row => Object.values(row).join(';')).join('\n');
 
-      fs.writeFile(fileName, fileContent, (writeError) => {
-        connection.end();
-        if (!writeError) {
-          callback(null, `Arquivo ${fileName} gerado com sucesso.`);
-        } else {
-          callback(writeError);
-        }
-      });
-    });
-  });
-}
+//       fs.writeFile(fileName, fileContent, (writeError) => {
+//         connection.end();
+//         if (!writeError) {
+//           callback(null, `Arquivo ${fileName} gerado com sucesso.`);
+//         } else {
+//           callback(writeError);
+//         }
+//       });
+//     });
+//   });
+// }
 
 
 // Função para atualizar o console no arquivo HTML
