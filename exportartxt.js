@@ -145,4 +145,6 @@ exportarDadosParaTXTSync((error, successMessage) => {
     }
 });
 
-module.exports = exportarDadosParaTXTSync;
+module.exports = {
+    exportarDadosParaTXTSync
+};

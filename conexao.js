@@ -1,5 +1,5 @@
 const {lerArquivo, connectDB, reiniciarBancoAsync, atualizarStatus, obterStatus} = require('./importncm');
-const exportarDadosParaTXTSync = require('./exportartxt')
+const {exportarDadosParaTXTSync} = require('./exportartxt')
 const {apist} = require('./ApiSt');
 const {buscarNCMs} = require('./ApiPis');
 const mysql = require('mysql')
@@ -37,7 +37,7 @@ async function atualizarStatusHTML(apiId, novoStatus) {
   });
 }
 
-//Anulei função para exportar clean de outro arquivo
+
 // function exportarDadosParaTXTSync(callback) {
 //   const connection = mysql.createConnection({
 //     host: 'localhost',

@@ -99,7 +99,7 @@ const lerArquivo = async () => {
 
         console.log('Lendo arquivo...');
 
-        const data = await fs.readFile('E:/WkRadar/BI/Registros/tecwinncm.txt', 'utf8');
+        const data = await fs.readFile('C:/Users/Fellipe Silva/OneDrive/Área de Trabalho/code/tecwin/tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
 
         console.log(`Encontradas ${linhas.length} linhas no arquivo.`);
@@ -118,7 +118,6 @@ const lerArquivo = async () => {
     }
 };
 
-lerArquivo();
 
 module.exports = {
     lerArquivo,
