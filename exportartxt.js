@@ -70,7 +70,7 @@ async function consultarCofinsPorNcm(connection, ncm) {
 // Função para consultar ICMS/ST por NCM
 async function consultarIcmsStPorNcm(connection, ncm) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT ufDestinatario, mvaOriginal, aliquotaEfetiva FROM st_ncm WHERE ncmid = ?', [ncm], (icmsQueryError, icmsRows) => {
+        connection.query('SELECT DISTINCT ufDestinatario, cst, aliquotaEfetiva FROM st_ncm JOIN tec_stcst ON ufDestinatario = uf AND ncmid = ncm WHERE ncmid =  ?', [ncm], (icmsQueryError, icmsRows) => {
             if (icmsQueryError) {
                 reject(icmsQueryError);
                 return;
@@ -117,8 +117,8 @@ async function exportarDadosParaTXTSync(callback) {
                 fileContent += `H|0|${ipi}|${produto.cstipi}\n`; 
 
                 icmsSt.forEach(row => {
-                    const { ufDestinatario, mvaOriginal, aliquotaEfetiva } = row;
-                    fileContent += `I|S|0|${ufDestinatario}|${mvaOriginal}|${aliquotaEfetiva}\n`;
+                    const { ufDestinatario, cst, aliquotaEfetiva } = row;
+                    fileContent += `I|S|0|${ufDestinatario}|${cst}|${aliquotaEfetiva}|\n`;
                 });
             }
         }
