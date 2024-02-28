@@ -19,22 +19,33 @@ db.connect(err => {
     main();
 });
 
+// Cache para NCMs já processados
+const ncmProcessados = new Set();
+
 async function ncmJaProcessado(ncm) {
+    if (ncmProcessados.has(ncm)) {
+        return true;
+    }
+
     return new Promise((resolve, reject) => {
-        const query = 'SELECT * FROM tec_ipi WHERE ncm_codigo = ?';
+        const query = 'SELECT 1 FROM tec_ipi WHERE ncm_codigo = ? LIMIT 1';
         db.query(query, [ncm], (err, result) => {
             if (err) {
                 reject(err);
                 return;
             }
-            resolve(result.length > 0);
+            const jaProcessado = result.length > 0;
+            if (jaProcessado) {
+                ncmProcessados.add(ncm); // Adiciona ao cache
+            }
+            resolve(jaProcessado);
         });
     });
 }
 
 async function inserirNoBanco(dados) {
     if (dados.length > 0 && dados[0].ncm && dados[0].ncm.codigo) {
-        const dado = dados[0]; // Pega apenas o primeiro elemento do array
+        const dado = dados[0];
         const jaProcessado = await ncmJaProcessado(dado.ncm.codigo);
         if (jaProcessado) {
             console.log(`NCM já processado: ${dado.ncm.codigo}`);
@@ -67,44 +78,20 @@ async function inserirNoBanco(dados) {
             dado.necessidadeLI
         ];
 
-        try {
-            await new Promise((resolve, reject) => {
-                db.query(query, valores, (erro, result) => {
-                    if (erro) reject(erro);
-                    else resolve(result);
-                });
-            });
-            console.log('Dados inseridos:', valores);
-        } catch (erro) {
-            console.error('Erro ao inserir dados:', erro);
-        }
+        db.query(query, valores, (erro, result) => {
+            if (erro) {
+                console.error('Erro ao inserir dados:', erro);
+            } else {
+                console.log('Dados inseridos com sucesso para o NCM:', dado.ncm.codigo);
+            }
+        });
     } else {
         console.log('Nenhum dado válido para inserir');
     }
 }
 
-async function buscarNCMs() {
-    const query = 'SELECT ncm FROM tec_produto';
-    try {
-        const resultados = await new Promise((resolve, reject) => {
-            db.query(query, (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
-            });
-        });
-
-        for (const linha of resultados) {
-            await fazerRequisicaoAPI(linha.ncm).catch(e => {
-                console.error('Erro com o NCM:', linha.ncm, e);
-            });
-        }
-    } catch (err) {
-        console.error('Erro ao buscar NCMs:', err);
-    }
-}   
-
-async function obterTodosNCMs() {
-    const query = 'SELECT ncm FROM tec_produto';
+async function buscarNCMsUnicos() {
+    const query = 'SELECT DISTINCT ncm FROM tec_produto';
     try {
         const resultados = await new Promise((resolve, reject) => {
             db.query(query, (err, result) => {
@@ -115,7 +102,7 @@ async function obterTodosNCMs() {
 
         return resultados.map(linha => linha.ncm);
     } catch (err) {
-        console.error('Erro ao obter NCMs:', err);
+        console.error('Erro ao buscar NCMs:', err);
         throw err;
     }
 }
@@ -138,8 +125,24 @@ async function fazerRequisicaoAPI(ncm) {
     }
 }
 
-async function main() {
-    await buscarNCMs();
+async function processarNCMsEmParalelo(ncms, limiteParalelo = 10) {
+    for (let i = 0; i < ncms.length; i += limiteParalelo) {
+        const promessas = ncms.slice(i, i + limiteParalelo).map(ncm =>
+            ncmJaProcessado(ncm).then(jaProcessado => {
+                if (!jaProcessado) {
+                    return fazerRequisicaoAPI(ncm).catch(e => {
+                        console.error('Erro com o NCM:', ncm, e);
+                    });
+                }
+            })
+        );
+        await Promise.all(promessas);
+    }
 }
 
-module.exports = { buscarNCMs };
+async function main() {
+    const ncmsUnicos = await buscarNCMsUnicos();
+    await processarNCMsEmParalelo(ncmsUnicos);
+}
+
+main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
