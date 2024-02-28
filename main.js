@@ -5,7 +5,7 @@ const mysql = require('mysql');
 const cron = require('node-cron');
 const moment = require('moment');
 const { execConect, atualizarConsoleHTML, atualizarStatusHTML, reiniciarAplicacao } = require('./conexao');
-const {reiniciarBancoAsync, connectDB} = require('./importncm')
+const { reiniciarBancoAsync, connectDB } = require('./importncm');
 
 // Configurações do banco de dados
 const dbConfig = {
@@ -24,41 +24,39 @@ function conexaoDb() {
     return mysql.createConnection(dbConfig);
 }
 
-//Função para reiniciar IMPORTAÇÕES 
-async function iniciarApp () {
-    const db = await connectDB()
-    try {
-        await reiniciarBancoAsync(db);
-        console.log('Banco de dados reiniciado com sucesso!');
-    } catch (error) {
-        console.error('Erro ao reiniciar banco de dados: ', error)
-    }
-}
-
 // Variáveis globais
 let tray = null;
 let settingsWindow = null;
-const connection = conexaoDb(); // Cria uma conexão com o banco de dados
+let connection = null;
+
+// Função para iniciar a aplicação
+async function iniciarApp() {
+    connection = await connectDB();
+    try {
+        await reiniciarBancoAsync(connection);
+        console.log('Banco de dados reiniciado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao reiniciar banco de dados: ', error);
+    }
+}
 
 // Configuração inicial quando o aplicativo está pronto
 app.whenReady().then(() => {
-    // Configuração do ícone na bandeja do sistema
-    tray = new Tray(path.join(__dirname, '/img/icon.ico'));
-    const contextMenu = Menu.buildFromTemplate([
-        { label: 'Configurações', type: 'normal', click: abrirConfigurador },
-        { label: 'Sair', type: 'normal', click: () => app.quit() }
-    ]);
-    tray.setToolTip('Star Info');
-    tray.setContextMenu(contextMenu);
+    iniciarApp().then(() => {
+        // Configuração do ícone na bandeja do sistema
+        tray = new Tray(path.join(__dirname, '/img/icon.ico'));
+        const contextMenu = Menu.buildFromTemplate([
+            { label: 'Configurações', type: 'normal', click: abrirConfigurador },
+            { label: 'Sair', type: 'normal', click: () => app.quit() }
+        ]);
+        tray.setToolTip('Star Info');
+        tray.setContextMenu(contextMenu);
 
-    // Abre o configurador quando o ícone na bandeja é clicado
-    tray.on('click', () => {
-        abrirConfigurador();
+        // Abre o configurador quando o ícone na bandeja é clicado
+        tray.on('click', () => {
+            abrirConfigurador();
+        });
     });
-
-    // Configuração inicial de status no HTML e no console
-    reiniciarAplicacao();
-    iniciarApp();
 });
 
 // Função para abrir a janela de configurações
@@ -96,17 +94,13 @@ process.on('SIGINT', () => {
     app.quit();
 });
 
-
-// Função para limpar horário no banco de dados
-async function limparBancoHorario() {
-    const sql = 'TRUNCATE TABLE tec_hora;';
-    await connection.query(sql);
-}
-
-// Função para inserir um novo horário no banco de dados
+// Função para inserir um novo horário no banco de dados e agendar a tarefa cron
 async function inserirHorarioNoBanco(configuracoes) {
-    // Limpa tabela de horários antes de inserir novo horário
-    await limparBancoHorario();
+    // Verifica se o horário foi definido pelo usuário
+    if (!configuracoes.horario) {
+        console.error('Nenhum horário foi definido pelo usuário.');
+        return;
+    }
 
     // Insere o horário no banco de dados
     connection.query(insertQuery, [configuracoes.horario], (err, results) => {
@@ -121,9 +115,10 @@ async function inserirHorarioNoBanco(configuracoes) {
         const expressaoCron = moment(configuracoes.horario, 'HH:mm:ss').format('s m H * * *');
 
         try {
-            cron.schedule(expressaoCron, () => {
+            cron.schedule(expressaoCron, async () => {
                 console.log('Executando script', configuracoes.horario);
-                execConect();
+                // Agora executa o código de conexão aqui
+                await execConect();
             });
         } catch (error) {
             console.error('Erro ao agendar cron:', error);
@@ -138,13 +133,11 @@ async function inserirHorarioNoBanco(configuracoes) {
 
 // Manipula a mensagem para salvar configurações recebida do front-end
 ipcMain.on('salvar-configuracoes', (event, configuracoes) => {
-    // Chama a função sem aguardar pela resolução da promessa
+    // Chama a função para inserir o horário no banco de dados
     inserirHorarioNoBanco(configuracoes).catch(error => {
         console.error('Erro ao salvar configurações:', error);
     });
 });
-
-
 
 // Manipula o evento de fechamento de todas as janelas
 app.on('window-all-closed', () => {

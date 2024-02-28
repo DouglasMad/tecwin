@@ -39,7 +39,7 @@ const inserirProduto = (db, codigo, ncm, nomeProduto, unidadeMedida, cst, uf) =>
     });
 };
 
-const lerArquivo = async () => {
+const importst = async () => {
     try {
         const db = await connectDB();
 
@@ -68,4 +68,8 @@ const lerArquivo = async () => {
     }
 };
 
-lerArquivo(); // Adicionado para executar a função diretamente
+// importst(); // Adicionado para executar a função diretamente
+
+module.exports = {
+    importst
+}

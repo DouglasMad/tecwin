@@ -80,7 +80,8 @@ async function apist() {
                 const stData = response.data.st;
                 await saveDataToDatabase(stData, ncm);
             } catch (error) {
-                console.error('Erro ao fazer a chamada API:', error);
+                // console.error('Erro ao fazer a chamada API:', error); Estava assim porem erro esta muito grande 
+                console.error('Erro ao fazer a chamada NCM: ', ncm);
             }
         } else {
             console.log(`NCM já processado: ${ncm}`);
@@ -88,5 +89,5 @@ async function apist() {
     }
 }
 
-apist()
+// apist() //PARA EXECUÇÃO MANUALMENTE
 module.exports = {apist}

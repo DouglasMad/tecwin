@@ -16,7 +16,7 @@ db.connect(err => {
         return;
     }
     console.log('Conexão com o banco de dados estabelecida.');
-    main();
+    // main();
 });
 
 async function ncmJaProcessado(ncm) {
@@ -134,12 +134,13 @@ async function fazerRequisicaoAPI(ncm) {
             await inserirNoBanco(data.tec); // Passa todos os dados para inserirNoBanco
         }
     } catch (error) {
-        console.error('Erro ao fazer a chamada API para o NCM', ncm, ':', error);
+        // console.error('Erro ao fazer a chamada API para o NCM', ncm, ':', error); Estava assim mas o erro estava muito grande
+        console.error('Erro ao fazer a chamada API para o NCM', ncm, ':');
     }
 }
 
-async function main() {
-    await buscarNCMs();
-}
+// async function main() {
+//     await buscarNCMs();
+// }
 
 module.exports = { buscarNCMs };
