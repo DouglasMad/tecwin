@@ -1,10 +1,11 @@
 const {lerArquivo, connectDB, reiniciarBancoAsync, atualizarStatus, obterStatus} = require('./importncm');
+const {importst} = require('./importst')
 const {exportarDadosParaTXTSync} = require('./exportartxt')
 const {apist} = require('./ApiSt');
 const {buscarNCMs} = require('./ApiPis');
-const mysql = require('mysql')
-const fs = require('fs')
-
+const {processarNCM} = require('./ApiPisDebi');
+const mysql = require('mysql');
+const fs = require('fs');
 
 
 // Função para atualizar o status no arquivo HTML
@@ -121,64 +122,75 @@ async function reiniciarAplicacao() {
 
 
 async function execConect() {
-    try {
-        const db = await connectDB();
+  try {
+      const db = await connectDB();
 
+      // Verificar e executar a primeira API
+      await verificarEExecutarPrimeiraAPI(db);
 
+      // Verificar e executar a segunda API
+      await verificarEExecutarSegundaAPI(db);
 
+      // Verificar e executar a terceira API
+      await verificarEExecutarTerceiraAPI(db);
 
-
-        // Verificar e executar a primeira API
-        const statusImportNCM = await obterStatus(db, 'Primeira API');
-        if (statusImportNCM !== 'concluido') {
-            await reiniciarAplicacao()
-            await atualizarStatusHTML('primeira', 'Em andamento');
-            await atualizarStatus(db, 'Primeira API', 'em_andamento');
-            await atualizarConsoleHTML('terceira', 'Aguardando terminar execução');
-            const resultNcm = await lerArquivo();
-            console.log('Resultado ImportNCM: ', resultNcm);
-            await atualizarStatus(db, 'Primeira API', 'concluido');
-            await atualizarStatusHTML('primeira', 'Concluido');
-        }
-
-        // Verificar e executar a segunda API
-        const statusApiSt = await obterStatus(db, 'Segunda API');
-        if (statusApiSt !== 'concluido') {
-            await atualizarStatusHTML('segunda', 'Em andamento');
-            await atualizarStatus(db, 'Segunda API', 'em_andamento');
-            const resultSt = await apist(); // Certifique-se de que apist() esteja definido
-            console.log('Resultado ApiSt: ', resultSt);
-            await atualizarStatus(db, 'Segunda API', 'concluido');
-            await atualizarStatusHTML('segunda', 'Concluido');
-        }
-
-        // Verificar e executar a terceira API
-        const statusApiPis = await obterStatus(db, 'Terceira API');
-        if (statusApiPis !== 'concluido') {
-            await atualizarStatusHTML('terceira', 'Em andamento');
-            await atualizarStatus(db, 'Terceira API', 'em_andamento');
-            const resultPis = await buscarNCMs(); // Certifique-se de que buscarNCMs() esteja definido
-            console.log('Resultado ApiPis:', resultPis);
-            await atualizarStatus(db, 'Terceira API', 'concluido');
-            await atualizarStatusHTML('terceira', 'Concluido');
-            await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
-            exportarDadosParaTXTSync((error, successMessage) => {
-              if (error) {
-                console.error('Erro ao exportar dados para o arquivo TXT:', error);
-              } else {
-                console.log(successMessage);
-              }
-            });
+      // Exportar dados para o arquivo TXT após todas as APIs serem executadas
+      await exportarDadosParaTXTSync((error, successMessage) => {
+          if (error) {
+              console.error('Erro ao exportar dados para o arquivo TXT:', error);
+          } else {
+              console.log(successMessage);
           }
+      });
 
-
-
-        // Fechar a conexão com o banco de dados
-        db.end();
-    } catch (error) {
-        console.error(error);
-    }
+      // Fechar a conexão com o banco de dados
+      db.end();
+  } catch (error) {
+      console.error(error);
+  }
 }
+
+async function verificarEExecutarPrimeiraAPI(db) {
+  const statusImportNCM = await obterStatus(db, 'Primeira API');
+  if (statusImportNCM !== 'concluido') {
+      await reiniciarAplicacao()
+      await atualizarStatusHTML('primeira', 'Em andamento');
+      await atualizarStatus(db, 'Primeira API', 'em_andamento');
+      await atualizarConsoleHTML('terceira', 'Aguardando terminar execução');
+      const resultNcm = await lerArquivo();
+      console.log('Resultado ImportNCM: ', resultNcm);
+      await atualizarStatus(db, 'Primeira API', 'concluido');
+      await atualizarStatusHTML('primeira', 'Concluido');
+  }
+}
+
+async function verificarEExecutarSegundaAPI(db) {
+  const statusApiSt = await obterStatus(db, 'Segunda API');
+  if (statusApiSt !== 'concluido') {
+      await atualizarStatusHTML('segunda', 'Em andamento');
+      await atualizarStatus(db, 'Segunda API', 'em_andamento');
+      const resultSt = await apist(); // Certifique-se de que apist() esteja definido
+      console.log('Resultado ApiSt: ', resultSt);
+      await atualizarStatus(db, 'Segunda API', 'concluido');
+      await atualizarStatusHTML('segunda', 'Concluido');
+  }
+}
+
+async function verificarEExecutarTerceiraAPI(db) {
+  const statusApiPis = await obterStatus(db, 'Terceira API');
+  if (statusApiPis !== 'concluido') {
+      await atualizarStatusHTML('terceira', 'Em andamento');
+      await atualizarStatus(db, 'Terceira API', 'em_andamento');
+      const resultPis = await buscarNCMs(); // Certifique-se de que buscarNCMs() esteja definido
+      console.log('Resultado ApiPis:', resultPis);
+      const resultPisDeb = await processarNCM();
+      console.log('Resultado ApiPis:', resultPisDeb);
+      await atualizarStatus(db, 'Terceira API', 'concluido');
+      await atualizarStatusHTML('terceira', 'Concluido');
+      await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
+  }
+}
+
 
 module.exports = {
     execConect: execConect,

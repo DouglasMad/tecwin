@@ -27,7 +27,8 @@ db.connect(err => {
             try {
                 await processarNCM(results[i].ncm);
             } catch (error) {
-                console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error);
+                // console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error); estava assim porem muito grande
+                console.error(`Erro ao processar o NCM: ${results[i].ncm}`);
                 // Continua para o próximo NCM mesmo que encontre um erro
             }
         }
@@ -101,4 +102,8 @@ async function processarNCM(ncm) {
     } catch (error) {
         throw error; // Lança o erro para ser capturado pelo try/catch do loop
     }
+}
+
+module.exports = {
+    processarNCM
 }

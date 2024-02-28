@@ -117,7 +117,7 @@ const lerArquivo = async () => {
         console.error('Erro durante a execução:', err);
     }
 };
-
+// lerArquivo() // Adicionado para executar a função diretamente
 
 module.exports = {
     lerArquivo,

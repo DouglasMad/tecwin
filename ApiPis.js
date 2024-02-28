@@ -16,7 +16,7 @@ db.connect(err => {
         return;
     }
     console.log('Conexão com o banco de dados estabelecida.');
-    main();
+    // main();
 });
 
 // Cache para NCMs já processados
@@ -121,10 +121,12 @@ async function fazerRequisicaoAPI(ncm) {
             await inserirNoBanco(data.tec); // Passa todos os dados para inserirNoBanco
         }
     } catch (error) {
-        console.error('Erro ao fazer a chamada API para o NCM', ncm, ':', error);
+        // console.error('Erro ao fazer a chamada API para o NCM', ncm, ':', error); Estava assim mas o erro estava muito grande
+        console.error('Erro ao fazer a chamada API para o NCM', ncm, ':');
     }
 }
 
+<<<<<<< HEAD
 async function processarNCMsEmParalelo(ncms, limiteParalelo = 10) {
     for (let i = 0; i < ncms.length; i += limiteParalelo) {
         const promessas = ncms.slice(i, i + limiteParalelo).map(ncm =>
@@ -139,6 +141,11 @@ async function processarNCMsEmParalelo(ncms, limiteParalelo = 10) {
         await Promise.all(promessas);
     }
 }
+=======
+// async function main() {
+//     await buscarNCMs();
+// }
+>>>>>>> 6577c64e5ebddb76a9bfba994e906f04b61b4e4c
 
 async function main() {
     const ncmsUnicos = await buscarNCMsUnicos();
