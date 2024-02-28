@@ -16,7 +16,7 @@ db.connect(err => {
         return;
     }
     console.log('Conexão com o banco de dados estabelecida.');
-    main();
+    // main();
 });
 
 // Cache para NCMs já processados
@@ -145,7 +145,7 @@ async function main() {
     await processarNCMsEmParalelo(ncmsUnicos);
 }
 
-main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
+// main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
 
 
 module.exports = {

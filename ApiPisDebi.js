@@ -9,12 +9,9 @@ const db = mysql.createConnection({
     database: 'db_ncm'
 });
 
-db.connect(err => {
-    if (err) {
-        console.error('Erro ao conectar ao banco de dados:', err);
-        return;
-    }
-    console.log('Conexão com o banco de dados estabelecida com sucesso.');
+// Função para processar todos os NCMs
+async function processarTodosNCMs() {
+    console.log('Iniciando o processamento de todos os NCMs...');
 
     // Consultar a tabela tec_produto para obter todos os NCMs
     db.query('SELECT ncm FROM tec_produto', async (err, results) => {
@@ -27,16 +24,16 @@ db.connect(err => {
             try {
                 await processarNCM(results[i].ncm);
             } catch (error) {
-                // console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error); estava assim porem muito grande
-                console.error(`Erro ao processar o NCM: ${results[i].ncm}`);
+                console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error);
                 // Continua para o próximo NCM mesmo que encontre um erro
             }
         }
 
         console.log('Processamento de todos os NCMs concluído.');
     });
-});
+}
 
+// Função para processar um NCM específico
 async function processarNCM(ncm) {
     const chave = 'TFACS-Q4LVT-XYYNF-ZNW59';
     const cliente = '02119874';
@@ -104,6 +101,7 @@ async function processarNCM(ncm) {
     }
 }
 
+// Exporta a função processarTodosNCMs() para uso em outros arquivos
 module.exports = {
-    processarNCM
-}
+    processarTodosNCMs
+};

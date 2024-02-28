@@ -111,11 +111,16 @@ async function apist() {
     }
 }
 
-// Executa a função principal
-apist().then(() => {
-    console.log("Processamento concluído.");
-    db.end(); // Encerra a conexão com o banco de dados ao final do processamento
-}).catch(err => {
-    console.error("Erro durante a execução:", err);
-    db.end(); // Encerra a conexão com o banco de dados em caso de erro
-});
+// // Executa a função principal manualmente
+// apist().then(() => {
+//     console.log("Processamento concluído.");
+//     db.end(); // Encerra a conexão com o banco de dados ao final do processamento
+// }).catch(err => {
+//     console.error("Erro durante a execução:", err);
+//     db.end(); // Encerra a conexão com o banco de dados em caso de erro
+// });
+
+
+module.exports = {
+    apist
+}

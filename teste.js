@@ -1,71 +1,117 @@
-const fs = require('fs').promises;
+const axios = require('axios');
 const mysql = require('mysql');
 
-const connectDB = () => {
-    return new Promise((resolve, reject) => {
-        const db = mysql.createConnection({
-            host: 'localhost',
-            user: 'root',
-            password: '123456',
-            database: 'db_ncm'
-        });
+// Configuração do banco de dados MySQL
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'db_ncm'
+});
 
-        db.connect(err => {
-            if (err) {
-                console.error('Erro ao conectar ao banco de dados:', err);
-                reject(err);
-            } else {
-                console.log("Conectado ao banco de dados com sucesso!");
-                resolve(db);
-            }
-        });
-    });
-};
-
-const inserirProduto = (db, codigo, ncm, nomeProduto, unidadeMedida, cst, uf) => {
-    return new Promise((resolve, reject) => {
-        const ncmSemPontos = ncm.replace(/\./g, ''); // Continua removendo os pontos do NCM
-
-        const sql = 'INSERT INTO tec_stcst (codigo, ncm, nmproduto, unidade, cst, uf) VALUES (?, ?, ?, ?, ?, ?)';
-        db.query(sql, [codigo, ncmSemPontos, nomeProduto, unidadeMedida, cst, uf], (err) => {
-            if (err) {
-                console.error(`Erro ao inserir o produto com código ${codigo}:`, err);
-                reject(err);
-            } else {
-                console.log(`Produto com código ${codigo} inserido com sucesso.`);
-                resolve();
-            }
-        });
-    });
-};
-
-const lerArquivo = async () => {
-    try {
-        const db = await connectDB();
-
-        console.log('Iniciando leitura do arquivo...');
-
-        const data = await fs.readFile('E:/WkRadar/BI/Registros/tecwinst.txt', 'utf8');
-        const linhas = data.split('\n');
-
-        console.log(`Total de ${linhas.length} linhas encontradas no arquivo.`);
-
-        for (const linha of linhas) {
-            const [codigo, ncm, nomeProduto, unidadeMedida, cst, uf] = linha.split('|');
-            if (codigo && ncm && nomeProduto && unidadeMedida && cst && uf) { // Verifica se todos os campos estão presentes
-                console.log(`Processando: ${linha}`);
-                await inserirProduto(db, codigo, ncm, nomeProduto, unidadeMedida, cst, uf);
-            } else {
-                console.log(`Linha incompleta ignorada: ${linha}`);
-            }
-        }
-
-        console.log('Importação finalizada.');
-
-        db.end();
-    } catch (err) {
-        console.error('Erro durante a execução:', err);
+db.connect(err => {
+    if (err) {
+        console.error('Erro ao conectar ao banco de dados:', err);
+        return;
     }
-};
+    console.log('Conexão com o banco de dados estabelecida.');
+});
 
-lerArquivo(); // Adicionado para executar a função diretamente
+// Cache para NCMs já processados
+const ncmProcessedCache = new Set();
+
+async function ncmProcessed(ncm) {
+    if (ncmProcessedCache.has(ncm)) {
+        return true;
+    }
+
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT 1 FROM st_ncm WHERE ncmid = ? LIMIT 1';
+        db.query(query, [ncm], (err, result) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            const processed = result.length > 0;
+            if (processed) {
+                ncmProcessedCache.add(ncm);
+            }
+            resolve(processed);
+        });
+    });
+}
+
+async function saveDataToDatabase(stData, ncm) {
+    if (!stData || stData.length === 0) {
+        console.log('Nenhum dado para inserir no banco de dados.');
+        return;
+    }
+
+    const values = stData.map(item => [
+        item.ufRemetente,
+        item.ufDestinatario,
+        item.aliquotaDestino,
+        item.aliquotaEfetiva,
+        item.aliquotaInterestadual,
+        item.aliquotaInterestadualMI,
+        item.mvaOriginal,
+        item.mvaAjustadaMI,
+        item.mvaAjustada,
+        item.cest,
+        ncm,
+        item.link
+    ]);
+
+    const query = 'INSERT INTO st_ncm (ufRemetente, ufDestinatario, aliquotaDestino, aliquotaEfetiva, aliquotaInterestadual, aliquotaInterestadualMI, mvaOriginal, mvaAjustadaMI, mvaAjustada, cest, ncmid, link) VALUES ?';
+
+    db.query(query, [values], (err, result) => {
+        if (err) {
+            console.error('Erro ao inserir dados:', err);
+            return;
+        }
+        console.log(`Dados inseridos com sucesso para o NCM: ${ncm}`);
+    });
+}
+
+async function getAllUniqueNcms() {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT DISTINCT ncm FROM tec_produto';
+        db.query(query, (err, result) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(result.map(row => row.ncm));
+        });
+    });
+}
+
+async function apist() {
+    const ncms = await getAllUniqueNcms();
+    for (const ncm of ncms) {
+        const processed = await ncmProcessed(ncm);
+        if (!processed) {
+            const uf_saida = "RJ";
+            const chave = "TFACS-Q4LVT-XYYNF-ZNW59";
+            const cliente = "02119874";
+            const formato = "json";
+            const url = `https://ics.multieditoras.com.br/ics/st/${ncm}/${uf_saida}?chave=${chave}&cliente=${cliente}&formato=${formato}`;
+
+            try {
+                const response = await axios.get(url);
+                const stData = response.data.st;
+                console.log('Dados recebidos da API para NCM:', ncm, stData);
+                await saveDataToDatabase(stData, ncm);
+            } catch (error) {
+                console.error('Erro ao fazer a chamada API para o NCM:', ncm, error.message);
+            }
+        } else {
+            console.log(`NCM já processado: ${ncm}`);
+        }
+    }
+}
+
+// Descomente a linha abaixo para executar o script diretamente.
+// apist();
+
+module.exports = { apist };

@@ -3,7 +3,7 @@ const {importst} = require('./importst')
 const {exportarDadosParaTXTSync} = require('./exportartxt')
 const {apist} = require('./ApiSt');
 const {main} = require('./ApiPis');
-const {processarNCM} = require('./ApiPisDebi');
+const {processarTodosNCMs} = require('./ApiPisDebi');
 const mysql = require('mysql');
 const fs = require('fs');
 
@@ -37,47 +37,6 @@ async function atualizarStatusHTML(apiId, novoStatus) {
     });
   });
 }
-
-
-// function exportarDadosParaTXTSync(callback) {
-//   const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: '123456',
-//     database: 'db_ncm'
-//   });
-
-//   connection.connect((connectError) => {
-//     if (connectError) {
-//       callback(connectError);
-//       return;
-//     }
-
-//     connection.query('SELECT * FROM tec_produto', (queryError, rows) => {
-//       if (queryError) {
-//         connection.end();
-//         callback(queryError);
-//         return;
-//       }
-
-
-//       const currentDate = new Date();
-//       const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
-    
-//       const fileName = `backup${formattedDate}.txt`;
-//       const fileContent = rows.map(row => Object.values(row).join(';')).join('\n');
-
-//       fs.writeFile(fileName, fileContent, (writeError) => {
-//         connection.end();
-//         if (!writeError) {
-//           callback(null, `Arquivo ${fileName} gerado com sucesso.`);
-//         } else {
-//           callback(writeError);
-//         }
-//       });
-//     });
-//   });
-// }
 
 
 // Função para atualizar o console no arquivo HTML
@@ -134,19 +93,16 @@ async function execConect() {
       // Verificar e executar a terceira API
       await verificarEExecutarTerceiraAPI(db);
 
-      db.end();
 
-      // Exportar dados para o arquivo TXT após todas as APIs serem executadas
-      await exportarDadosParaTXTSync((error, successMessage) => {
-          if (error) {
-              console.error('Erro ao exportar dados para o arquivo TXT:', error);
-          } else {
-              console.log(successMessage);
-          }
-      });
+      exportarDadosParaTXTSync((error, successMessage) => {
+        if (error) {
+            console.error('Erro ao exportar dados para o arquivo TXT:', error);
+        } else {
+            console.log("Executando gerador de txt", successMessage);
+        }
+    });
 
-      // Fechar a conexão com o banco de dados
-      db.end();
+
   } catch (error) {
       console.error(error);
   }
@@ -160,6 +116,7 @@ async function verificarEExecutarPrimeiraAPI(db) {
       await atualizarStatus(db, 'Primeira API', 'em_andamento');
       await atualizarConsoleHTML('terceira', 'Aguardando terminar execução');
       const resultNcm = await lerArquivo();
+      const resultSt = await importst();
       console.log('Resultado ImportNCM: ', resultNcm);
       await atualizarStatus(db, 'Primeira API', 'concluido');
       await atualizarStatusHTML('primeira', 'Concluido');
@@ -171,7 +128,13 @@ async function verificarEExecutarSegundaAPI(db) {
   if (statusApiSt !== 'concluido') {
       await atualizarStatusHTML('segunda', 'Em andamento');
       await atualizarStatus(db, 'Segunda API', 'em_andamento');
-      const resultSt = await apist(); // Certifique-se de que apist() esteja definido
+      const resultSt = await apist().then(() => {
+        console.log("Processamento concluído.");
+        db.end(); // Encerra a conexão com o banco de dados ao final do processamento
+    }).catch(err => {
+        console.error("Erro durante a execução:");
+        db.end(); // Encerra a conexão com o banco de dados em caso de erro
+    }); // Certifique-se de que apist() esteja definido
       console.log('Resultado ApiSt: ', resultSt);
       await atualizarStatus(db, 'Segunda API', 'concluido');
       await atualizarStatusHTML('segunda', 'Concluido');
@@ -185,7 +148,7 @@ async function verificarEExecutarTerceiraAPI(db) {
       await atualizarStatus(db, 'Terceira API', 'em_andamento');
       const resultPis = await main(); 
       console.log('Resultado ApiPis:', resultPis);
-      const resultPisDeb = await processarNCM();
+      const resultPisDeb = await processarTodosNCMs();
       console.log('Resultado ApiPis:', resultPisDeb);
       await atualizarStatus(db, 'Terceira API', 'concluido');
       await atualizarStatusHTML('terceira', 'Concluido');

@@ -9,140 +9,113 @@ const db = mysql.createConnection({
     database: 'db_ncm'
 });
 
-// Conectar ao banco de dados
 db.connect(err => {
     if (err) {
-        console.error('Erro ao conectar ao banco de dados:', err);
+        console.error('Erro ao conectar no banco de dados:', err);
         return;
     }
-    console.log('Conexão com o banco de dados estabelecida.');
-    main();
+    console.log('Conexão com o banco de dados estabelecida com sucesso.');
 });
 
-// Cache para NCMs já processados
-const ncmProcessados = new Set();
-
-async function ncmJaProcessado(ncm) {
-    if (ncmProcessados.has(ncm)) {
-        return true;
-    }
-
+// Função para verificar se um NCM já foi processado
+async function ncmProcessed(ncm) {
     return new Promise((resolve, reject) => {
-        const query = 'SELECT 1 FROM tec_ipi WHERE ncm_codigo = ? LIMIT 1';
+        const query = 'SELECT * FROM st_ncm WHERE ncmid = ?';
         db.query(query, [ncm], (err, result) => {
             if (err) {
+                console.error("Erro ao verificar NCM processado:", err);
                 reject(err);
-                return;
+            } else {
+                resolve(result.length > 0);
             }
-            const jaProcessado = result.length > 0;
-            if (jaProcessado) {
-                ncmProcessados.add(ncm); // Adiciona ao cache
-            }
-            resolve(jaProcessado);
         });
     });
 }
 
-async function inserirNoBanco(dados) {
-    if (dados.length > 0 && dados[0].ncm && dados[0].ncm.codigo) {
-        const dado = dados[0];
-        const jaProcessado = await ncmJaProcessado(dado.ncm.codigo);
-        if (jaProcessado) {
-            console.log(`NCM já processado: ${dado.ncm.codigo}`);
-            return;
-        }
-
-        const query = `INSERT INTO tec_ipi (
-            ncm_codigo, ncm_sequencial, unidade_medida_codigo, unidade_medida_descricao, 
-            ii, ii_normal, tipo_ii, ipi, ipi_normal, tipo_ipi, 
-            pis_pasep, cofins, tipo_icms, gatt, mercosul, existe_st, necessidade_li
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-        const valores = [
-            dado.ncm.codigo,
-            dado.ncm.sequencial,
-            dado.ncm.unidadeMedida.codigo,
-            dado.ncm.unidadeMedida.descricao,
-            dado.ii,
-            dado.iiNormal,
-            dado.tipoII,
-            dado.ipi,
-            dado.ipiNormal,
-            dado.tipoIPI,
-            dado.pisPasep,
-            dado.cofins,
-            dado.tipoICMS,
-            dado.gatt,
-            dado.mercosul,
-            dado.existeST,
-            dado.necessidadeLI
+// Função para salvar dados no banco de dados
+async function saveDataToDatabase(stData, ncm) {
+    for (const item of stData) {
+        const values = [
+            item.ufRemetente,
+            item.ufDestinatario,
+            item.aliquotaDestino,
+            item.aliquotaEfetiva,
+            item.aliquotaInterestadual,
+            item.aliquotaInterestadualMI,
+            item.mvaOriginal,
+            item.mvaAjustadaMI,
+            item.mvaAjustada,
+            item.cest, // Supondo que cest não é um array
+            ncm,
+            item.link
         ];
 
-        db.query(query, valores, (erro, result) => {
-            if (erro) {
-                console.error('Erro ao inserir dados:', erro);
-            } else {
-                console.log('Dados inseridos com sucesso para o NCM:', dado.ncm.codigo);
-            }
-        });
-    } else {
-        console.log('Nenhum dado válido para inserir');
-    }
-}
-
-async function buscarNCMsUnicos() {
-    const query = 'SELECT DISTINCT ncm FROM tec_produto';
-    try {
-        const resultados = await new Promise((resolve, reject) => {
-            db.query(query, (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
+        const query = 'INSERT INTO st_ncm (ufRemetente, ufDestinatario, aliquotaDestino, aliquotaEfetiva, aliquotaInterestadual, aliquotaInterestadualMI, mvaOriginal, mvaAjustadaMI, mvaAjustada, cest, ncmid, link) VALUES ?';
+        await new Promise((resolve, reject) => {
+            db.query(query, [[values]], (err, result) => {
+                if (err) {
+                    console.error('Erro ao salvar dados no banco:', err);
+                    reject(err);
+                } else {
+                    console.log('Dados inseridos com sucesso:', item.link);
+                    resolve(result);
+                }
             });
         });
-
-        return resultados.map(linha => linha.ncm);
-    } catch (err) {
-        console.error('Erro ao buscar NCMs:', err);
-        throw err;
     }
 }
 
-async function fazerRequisicaoAPI(ncm) {
-    const chave = 'TFACS-Q4LVT-XYYNF-ZNW59'; // Substitua com sua chave API real
-    const cliente = '02119874'; // Substitua com o ID do seu cliente
-    const formato = 'json';
-    const url = `https://ics.multieditoras.com.br/ics/tec/${ncm}?chave=${chave}&cliente=${cliente}&formato=${formato}`;
+// Função para recuperar todos os NCMs da tabela tec_produto, sem repetição
+async function getAllNcms() {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT DISTINCT ncm FROM tec_produto';
+        db.query(query, (err, result) => {
+            if (err) {
+                console.error("Erro ao buscar NCMs:", err);
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+    });
+}
 
-    try {
-        const response = await axios.get(url);
-        const data = response.data;
+// Função principal para realizar a operação
+async function apist() {
+    const ncms = await getAllNcms();
+    console.log(`Total de NCMs únicos encontrados: ${ncms.length}`);
+    if(ncms.length === 0) {
+        console.log("Nenhum NCM para processar.");
+        return;
+    }
+    for (const row of ncms) {
+        const ncm = row.ncm;
+        const processed = await ncmProcessed(ncm);
 
-        if (data.tec && Array.isArray(data.tec)) {
-            await inserirNoBanco(data.tec); // Passa todos os dados para inserirNoBanco
+        if (!processed) {
+            const uf_saida = "RJ";
+            const chave = "TFACS-Q4LVT-XYYNF-ZNW59";
+            const cliente = "02119874";
+            const formato = "json";
+
+            try {
+                const response = await axios.get(`https://ics.multieditoras.com.br/ics/st/${ncm}/${uf_saida}?chave=${chave}&cliente=${cliente}&formato=${formato}`);
+                const stData = response.data.st;
+                await saveDataToDatabase(stData, ncm);
+            } catch (error) {
+                console.error('Erro ao fazer a chamada NCM:', ncm, error.message);
+            }
+        } else {
+            console.log(`NCM já processado: ${ncm}`);
         }
-    } catch (error) {
-        console.error('Erro ao fazer a chamada API para o NCM', ncm, ':', error);
     }
 }
 
-async function processarNCMsEmParalelo(ncms, limiteParalelo = 10) {
-    for (let i = 0; i < ncms.length; i += limiteParalelo) {
-        const promessas = ncms.slice(i, i + limiteParalelo).map(ncm =>
-            ncmJaProcessado(ncm).then(jaProcessado => {
-                if (!jaProcessado) {
-                    return fazerRequisicaoAPI(ncm).catch(e => {
-                        console.error('Erro com o NCM:', ncm, e);
-                    });
-                }
-            })
-        );
-        await Promise.all(promessas);
-    }
-}
-
-async function main() {
-    const ncmsUnicos = await buscarNCMsUnicos();
-    await processarNCMsEmParalelo(ncmsUnicos);
-}
-
-main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
+// Executa a função principal
+apist().then(() => {
+    console.log("Processamento concluído.");
+    db.end(); // Encerra a conexão com o banco de dados ao final do processamento
+}).catch(err => {
+    console.error("Erro durante a execução:", err);
+    db.end(); // Encerra a conexão com o banco de dados em caso de erro
+});
