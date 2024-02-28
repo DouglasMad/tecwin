@@ -1,7 +1,5 @@
 const axios = require('axios');
 const mysql = require('mysql');
-const fs = require('fs');
-const xml2js = require('xml2js');
 
 // Configuração do banco de dados MySQL
 const db = mysql.createConnection({
@@ -11,13 +9,25 @@ const db = mysql.createConnection({
     database: 'db_ncm'
 });
 
+db.connect(err => {
+    if (err) {
+        console.error('Erro ao conectar no banco de dados:', err);
+        return;
+    }
+    console.log('Conexão com o banco de dados estabelecida com sucesso.');
+});
+
 // Função para verificar se um NCM já foi processado
 async function ncmProcessed(ncm) {
     return new Promise((resolve, reject) => {
         const query = 'SELECT * FROM st_ncm WHERE ncmid = ?';
         db.query(query, [ncm], (err, result) => {
-            if (err) reject(err);
-            resolve(result.length > 0);
+            if (err) {
+                console.error("Erro ao verificar NCM processado:", err);
+                reject(err);
+            } else {
+                resolve(result.length > 0);
+            }
         });
     });
 }
@@ -43,21 +53,29 @@ async function saveDataToDatabase(stData, ncm) {
         const query = 'INSERT INTO st_ncm (ufRemetente, ufDestinatario, aliquotaDestino, aliquotaEfetiva, aliquotaInterestadual, aliquotaInterestadualMI, mvaOriginal, mvaAjustadaMI, mvaAjustada, cest, ncmid, link) VALUES ?';
         await new Promise((resolve, reject) => {
             db.query(query, [[values]], (err, result) => {
-                if (err) reject(err);
-                resolve(result);
+                if (err) {
+                    console.error('Erro ao salvar dados no banco:', err);
+                    reject(err);
+                } else {
+                    console.log('Dados inseridos com sucesso:', item.link);
+                    resolve(result);
+                }
             });
         });
-        console.log('Dados inseridos com sucesso:', item.link);
     }
 }
 
-// Função para recuperar todos os NCMs da tabela tec_produto
+// Função para recuperar todos os NCMs da tabela tec_produto, sem repetição
 async function getAllNcms() {
     return new Promise((resolve, reject) => {
-        const query = 'SELECT ncm FROM tec_produto';
+        const query = 'SELECT DISTINCT ncm FROM tec_produto';
         db.query(query, (err, result) => {
-            if (err) reject(err);
-            resolve(result);
+            if (err) {
+                console.error("Erro ao buscar NCMs:", err);
+                reject(err);
+            } else {
+                resolve(result);
+            }
         });
     });
 }
@@ -65,14 +83,19 @@ async function getAllNcms() {
 // Função principal para realizar a operação
 async function apist() {
     const ncms = await getAllNcms();
+    console.log(`Total de NCMs únicos encontrados: ${ncms.length}`);
+    if(ncms.length === 0) {
+        console.log("Nenhum NCM para processar.");
+        return;
+    }
     for (const row of ncms) {
         const ncm = row.ncm;
         const processed = await ncmProcessed(ncm);
 
         if (!processed) {
-            const uf_saida = "RJ"; // Substitua pela UF desejada
-            const chave = "TFACS-Q4LVT-XYYNF-ZNW59"; // Substitua pela sua chave
-            const cliente = "02119874"; // Substitua pelo seu cliente
+            const uf_saida = "RJ";
+            const chave = "TFACS-Q4LVT-XYYNF-ZNW59";
+            const cliente = "02119874";
             const formato = "json";
 
             try {
@@ -80,8 +103,7 @@ async function apist() {
                 const stData = response.data.st;
                 await saveDataToDatabase(stData, ncm);
             } catch (error) {
-                // console.error('Erro ao fazer a chamada API:', error); Estava assim porem erro esta muito grande 
-                console.error('Erro ao fazer a chamada NCM: ', ncm);
+                console.error('Erro ao fazer a chamada NCM:', ncm, error.message);
             }
         } else {
             console.log(`NCM já processado: ${ncm}`);
@@ -89,5 +111,11 @@ async function apist() {
     }
 }
 
-// apist() //PARA EXECUÇÃO MANUALMENTE
-module.exports = {apist}
+// Executa a função principal
+apist().then(() => {
+    console.log("Processamento concluído.");
+    db.end(); // Encerra a conexão com o banco de dados ao final do processamento
+}).catch(err => {
+    console.error("Erro durante a execução:", err);
+    db.end(); // Encerra a conexão com o banco de dados em caso de erro
+});

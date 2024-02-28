@@ -2,7 +2,7 @@ const {lerArquivo, connectDB, reiniciarBancoAsync, atualizarStatus, obterStatus}
 const {importst} = require('./importst')
 const {exportarDadosParaTXTSync} = require('./exportartxt')
 const {apist} = require('./ApiSt');
-const {buscarNCMs} = require('./ApiPis');
+const {main} = require('./ApiPis');
 const {processarNCM} = require('./ApiPisDebi');
 const mysql = require('mysql');
 const fs = require('fs');
@@ -134,6 +134,8 @@ async function execConect() {
       // Verificar e executar a terceira API
       await verificarEExecutarTerceiraAPI(db);
 
+      db.end();
+
       // Exportar dados para o arquivo TXT após todas as APIs serem executadas
       await exportarDadosParaTXTSync((error, successMessage) => {
           if (error) {
@@ -181,7 +183,7 @@ async function verificarEExecutarTerceiraAPI(db) {
   if (statusApiPis !== 'concluido') {
       await atualizarStatusHTML('terceira', 'Em andamento');
       await atualizarStatus(db, 'Terceira API', 'em_andamento');
-      const resultPis = await buscarNCMs(); // Certifique-se de que buscarNCMs() esteja definido
+      const resultPis = await main(); 
       console.log('Resultado ApiPis:', resultPis);
       const resultPisDeb = await processarNCM();
       console.log('Resultado ApiPis:', resultPisDeb);

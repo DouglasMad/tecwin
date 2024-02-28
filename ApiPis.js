@@ -146,3 +146,8 @@ async function main() {
 }
 
 main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
+
+
+module.exports = {
+    main
+}
