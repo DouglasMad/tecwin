@@ -15,7 +15,8 @@
   "build": {
     "appId": "com.example.yourapp",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "img/icon.ico"
     }
   },
   "dependencies": {

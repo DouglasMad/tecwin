@@ -84,6 +84,9 @@ async function execConect() {
   try {
       const db = await connectDB();
 
+      //Reinicia os status da aplicação
+      await reiniciarAplicacao()
+
       // Verificar e executar a primeira API
       await verificarEExecutarPrimeiraAPI(db);
 
@@ -111,12 +114,11 @@ async function execConect() {
 async function verificarEExecutarPrimeiraAPI(db) {
   const statusImportNCM = await obterStatus(db, 'Primeira API');
   if (statusImportNCM !== 'concluido') {
-      await reiniciarAplicacao()
       await atualizarStatusHTML('primeira', 'Em andamento');
       await atualizarStatus(db, 'Primeira API', 'em_andamento');
       await atualizarConsoleHTML('terceira', 'Aguardando terminar execução');
       const resultNcm = await lerArquivo();
-      const resultSt = await importst();
+      importst();
       console.log('Resultado ImportNCM: ', resultNcm);
       await atualizarStatus(db, 'Primeira API', 'concluido');
       await atualizarStatusHTML('primeira', 'Concluido');
@@ -130,11 +132,9 @@ async function verificarEExecutarSegundaAPI(db) {
       await atualizarStatus(db, 'Segunda API', 'em_andamento');
       const resultSt = await apist().then(() => {
         console.log("Processamento concluído.");
-        db.end(); // Encerra a conexão com o banco de dados ao final do processamento
     }).catch(err => {
         console.error("Erro durante a execução:");
-        db.end(); // Encerra a conexão com o banco de dados em caso de erro
-    }); // Certifique-se de que apist() esteja definido
+    });
       console.log('Resultado ApiSt: ', resultSt);
       await atualizarStatus(db, 'Segunda API', 'concluido');
       await atualizarStatusHTML('segunda', 'Concluido');

@@ -85,7 +85,7 @@ async function consultarIcmsStPorNcm(connection, ncm) {
 async function exportarDadosParaTXTSync(callback) {
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
-    const directoryPath = 'C:/IntTecwin/'
+    const directoryPath = 'C:/Users/Fellipe Silva/OneDrive/Área de Trabalho/code/tecwin/d10/tecwin/'
     const fileName = path.join(directoryPath, `intTecwin_${formattedDate}.txt`);
     let fileContent = '';
 
