@@ -2,22 +2,41 @@ const fs = require('fs').promises;
 const mysql = require('mysql');
 const { promisify } = require('util');
 
-const connectDB = () => {
-    return new Promise((resolve, reject) => {
-        const db = mysql.createConnection({
-            host: 'localhost',
-            user: 'root',
-            password: '123456',
-            database: 'db_ncm'
-        });
+// Criação do pool de conexões
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'db_ncm',
+    port: '3306',
+    waitForConnections: true,
+    connectionLimit: 0,
+    queueLimit: 0
+});
 
-        db.connect(err => {
+// Função para obter uma conexão do pool
+const getConnectionFromPool = () => {
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
             if (err) {
-                console.error('Erro ao conectar ao banco de dados:', err);
+                console.error('Erro ao obter conexão do pool:', err);
                 reject(err);
             } else {
-                console.log("Conectado ao banco de dados!");
-                resolve(db);
+                resolve(connection);
+            }
+        });
+    });
+};
+
+// Função para executar uma query com uma conexão do pool
+const queryWithConnection = (connection, sql, values) => {
+    return new Promise((resolve, reject) => {
+        connection.query(sql, values, (err, results) => {
+            if (err) {
+                console.error('Erro ao executar query:', err);
+                reject(err);
+            } else {
+                resolve(results);
             }
         });
     });
@@ -59,60 +78,83 @@ async function reiniciarBancoAsync(db) {
             if (err) {
                 reject(err);
             } else {
-                console.log('Banco de dados reiniciado com sucesso!');
+                console.log('tec_produto reiniciado!');
+                resolve();
+            }
+        });
+    });
+}
+async function reiniciarst(db) {
+    return new Promise((resolve, reject) => {
+        const sql = 'TRUNCATE TABLE tec_stcst;';
+        db.query(sql, (err) => {
+            if (err) {
+                reject(err);
+            } else {
+                console.log('tec_stcst reiniciado com sucesso!');
                 resolve();
             }
         });
     });
 }
 
-const inserirProduto = (db, codigo, ncm, nomeProduto, unidadeMedida, cstipi) => {
+async function reiniciareStatus(db) {
     return new Promise((resolve, reject) => {
-        const ncmSemPontos = ncm ? ncm.replace(/\./g, '') : '';
-
-        db.query('SELECT * FROM tec_produto WHERE codigo = ?', [codigo], (err, result) => {
+        const sql = 'Truncate table db_ncm.execucao_status;';
+        db.query(sql, (err) => {
             if (err) {
-                console.error('Erro ao verificar a existência do produto:', err);
                 reject(err);
-            } else if (result.length === 0) {
-                const sql = 'INSERT INTO tec_produto (codigo, ncm, nmproduto, unidade, cstipi) VALUES (?, ?, ?, ?, ?)';
-                db.query(sql, [codigo, ncmSemPontos, nomeProduto, unidadeMedida, cstipi], (err) => {
-                    if (err) {
-                        console.error('Erro ao inserir o produto:', err);
-                        reject(err);
-                    } else {
-                        console.log(`Produto com código ${codigo} inserido com sucesso!`);
-                        resolve();
-                    }
-                });
             } else {
-                console.log(`Produto com código ${codigo} já existe no banco de dados.`);
+                console.log('tec_stcst reiniciado com sucesso!');
                 resolve();
             }
         });
     });
+}
+
+
+
+// Função para inserir um produto no banco de dados
+const inserirProduto = async (codigo, ncm, nomeProduto, unidadeMedida, cstipi) => {
+    let connection;
+    try {
+        connection = await getConnectionFromPool();
+        const ncmSemPontos = ncm ? ncm.replace(/\./g, '') : '';
+
+        const selectQuery = 'SELECT * FROM tec_produto WHERE codigo = ?';
+        const selectResult = await queryWithConnection(connection, selectQuery, [codigo]);
+
+        if (selectResult.length === 0) {
+            const insertQuery = 'INSERT INTO tec_produto (codigo, ncm, nmproduto, unidade, cstipi) VALUES (?, ?, ?, ?, ?)';
+            await queryWithConnection(connection, insertQuery, [codigo, ncmSemPontos, nomeProduto, unidadeMedida, cstipi]);
+            console.log(`Produto com código ${codigo} inserido com sucesso!`);
+        } else {
+            console.log(`Produto com código ${codigo} já existe no banco de dados.`);
+        }
+    } catch (err) {
+        console.error('Erro ao inserir o produto:', err);
+    } finally {
+        if (connection) {
+            connection.release(); // Libera a conexão de volta para o pool
+        }
+    }
 };
 
+// Função para ler o arquivo e inserir os produtos no banco de dados
 const lerArquivo = async () => {
     try {
-        const db = await connectDB();
-
         console.log('Lendo arquivo...');
-
-        const data = await fs.readFile('C:/Users/Fellipe Silva/OneDrive/Área de Trabalho/code/tecwin/tecwinncm.txt', 'utf8');
+        const data = await fs.readFile('C:/WKRadar/BI/Registros/tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
-
         console.log(`Encontradas ${linhas.length} linhas no arquivo.`);
 
         for (let linha of linhas) {
             const [codigo, ncm, nomeProduto, unidadeMedida, cstipi] = linha.split('|');
             console.log(`Processando linha: ${linha}`);
-            await inserirProduto(db, codigo, ncm, nomeProduto, unidadeMedida, cstipi);
+            await inserirProduto(codigo, ncm, nomeProduto, unidadeMedida, cstipi);
         }
 
         console.log('Finalizado.');
-
-        db.end();
     } catch (err) {
         console.error('Erro durante a execução:', err);
     }
@@ -121,8 +163,9 @@ const lerArquivo = async () => {
 
 module.exports = {
     lerArquivo,
-    connectDB,
     reiniciarBancoAsync,
+    reiniciarst,
+    reiniciareStatus,
     atualizarStatus,
     obterStatus,
 };

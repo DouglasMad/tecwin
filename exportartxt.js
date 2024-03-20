@@ -1,24 +1,57 @@
 const fs = require('fs');
 const mysql = require('mysql');
+const path = require('path')
 
-const connection = mysql.createConnection({
+// Criação do pool de conexões
+const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: '123456',
-    database: 'db_ncm'
+    database: 'db_ncm',
+    port: '3306',
+    waitForConnections: true,
+    connectionLimit: 0,
+    queueLimit: 0
 });
 
-connection.connect((connectError) => {
-    if (connectError) {
-        console.error('Erro ao conectar ao banco de dados:', connectError);
-        return;
+// Função para obter uma conexão do pool
+const getConnectionFromPool = () => {
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+            if (err) {
+                console.error('Erro ao obter conexão do pool:', err);
+                reject(err);
+            } else {
+                resolve(connection);
+            }
+        });
+    });
+};
+
+//Função para gerar um log para o txt
+async function gerarLog(arquivoTxt, tamanhoTxt, callback) {
+const currentDate = new Date();
+const formattedDate = currentDate.toLocaleString();
+const directoryPath = 'C:/Users/Administrador.PLASSER/Documents/exportartecwin/teste/'
+
+const logContent = `Último arquivo ${arquivoTxt} gerado com sucesso. \nTamanho do arquivo: ${tamanhoTxt} kb.\n Data e hora: ${formattedDate}`;
+
+const logFileName = path.join(directoryPath, "log.txt");
+
+fs.writeFile(logFileName, logContent, (writeError) => {
+    if(!writeError){
+        callback(null, `Arquivo de Log ${logFileName} gerado com sucesso.`);
+    }
+    else{
+        callback(writeError);
     }
 });
+};
 
 // Função para consultar os produtos
 async function consultarProdutos(connection) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT codigo, nmproduto, unidade, ncm, cstipi FROM tec_produto', (queryError, rows) => {
+        connection.query('SELECT codigo, nmproduto, unidade, ncm, cstipi, ipient FROM tec_produto', (queryError, rows) => {
             if (queryError) {
                 reject(queryError);
                 return;
@@ -70,7 +103,7 @@ async function consultarCofinsPorNcm(connection, ncm) {
 // Função para consultar ICMS/ST por NCM
 async function consultarIcmsStPorNcm(connection, ncm) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT DISTINCT ufDestinatario, cst, aliquotaEfetiva FROM st_ncm JOIN tec_stcst ON ufDestinatario = uf AND ncmid = ncm WHERE ncmid =  ?', [ncm], (icmsQueryError, icmsRows) => {
+        connection.query('SELECT DISTINCT ufDestinatario, cst, aliquotaEfetiva, aliquotaInterestadualMI FROM st_ncm JOIN tec_stcst ON ufDestinatario = uf AND ncmid = ncm WHERE ncmid =  ? AND aliquotaInterestadualMI IS NOT NULL', [ncm], (icmsQueryError, icmsRows) => {
             if (icmsQueryError) {
                 reject(icmsQueryError);
                 return;
@@ -80,16 +113,20 @@ async function consultarIcmsStPorNcm(connection, ncm) {
     });
 }
 
+  
+
 
 // Função principal para exportar dados para o arquivo TXT
 async function exportarDadosParaTXTSync(callback) {
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
-    const directoryPath = 'C:/Users/Fellipe Silva/OneDrive/Área de Trabalho/code/tecwin/d10/tecwin/'
-    const fileName = path.join(directoryPath, `intTecwin_${formattedDate}.txt`);
+    const directoryPath = 'C:/Users/Administrador.PLASSER/Documents/exportartecwin/teste/'
+    const fileName = path.join(directoryPath, `intTecwin.txt`);
     let fileContent = '';
 
     try {
+        connection = await getConnectionFromPool(); 
+
         const produtos = await consultarProdutos(connection);
 
         for (const produto of produtos) {
@@ -99,34 +136,56 @@ async function exportarDadosParaTXTSync(callback) {
             const aliquota = await consultarAliquitaPorNcm(connection, produto.ncm);
 
             // Verifica se há dados correspondentes nas consultas de PIS/PASEP, COFINS e ICMS/ST
-            if (pisPasep.length > 0 && cofins.length > 0 && icmsSt.length > 0) {
-                // Adiciona as linhas P e H apenas se houver dados correspondentes nas consultas
-                fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
+// Verifica se há dados correspondentes nas consultas de PIS/PASEP, COFINS e ICMS/ST
+if (icmsSt.length > 0 && aliquota.length > 0 && (pisPasep.length > 0 || cofins.length > 0)) {
+    // Adiciona as linhas P e H apenas se houver dados correspondentes nas consultas
+    fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
 
-                pisPasep.forEach(row => {
-                    const { cst, pisDebito } = row;
-                    fileContent += `S|0|P|S|${cst ? cst : ''}|${pisDebito}\n`;
-                });
+    pisPasep.forEach(row => {
+        const { cst, pisDebito } = row;
+        fileContent += `S|1|P|S|${cst ? cst : ''}|${pisDebito}\n`;
+    });
 
-                cofins.forEach(row => {
-                    const { cst, cofinsDebito } = row;
-                    fileContent += `S|0|C|S|${cst ? cst : ''}|${cofinsDebito}\n`;
-                });
+    cofins.forEach(row => {
+        const { cst, cofinsDebito } = row;
+        fileContent += `S|1|C|S|${cst ? cst : ''}|${cofinsDebito}\n`;
+    });
 
-                const {ipi} = aliquota[0];
-                fileContent += `H|0|${ipi}|${produto.cstipi}\n`; 
+    const cstIpiCleaned = produto.cstipi.toString().replace(/[\r\n]+/g, '');
+    const {ipi} = aliquota[0];
+    fileContent += `H|0|${ipi}|${cstIpiCleaned}|${produto.ipiEnt}\n`; 
 
-                icmsSt.forEach(row => {
-                    const { ufDestinatario, cst, aliquotaEfetiva } = row;
-                    fileContent += `I|S|0|${ufDestinatario}|${cst}|${aliquotaEfetiva}|\n`;
-                });
-            }
+    icmsSt.forEach(row => {
+        const { ufDestinatario, cst, aliquotaEfetiva, aliquotaInterestadualMI } = row;
+        fileContent += `I|S|1|${ufDestinatario}|${cst}|${aliquotaEfetiva}|${aliquotaInterestadualMI}\n`;
+    });
+} else if (icmsSt.length > 0 && aliquota.length > 0) {
+    // Adiciona as linhas P e H apenas se houver dados correspondentes nas consultas
+    fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
+
+    const cstIpiCleaned = produto.cstipi.toString().replace(/[\r\n]+/g, '');
+    const {ipi} = aliquota[0];
+    fileContent += `H|0|${ipi}|${cstIpiCleaned}|${produto.ipient}\n`; 
+    //  fileContent += `H|1|${ipi.trim()}|${produto.cstipi.trim()}|${produto.ipiEnt.trim()}\n`;
+
+    icmsSt.forEach(row => {
+        const { ufDestinatario, cst, aliquotaEfetiva, aliquotaInterestadualMI } = row;
+        fileContent += `I|S|1|${ufDestinatario}|${cst}|${aliquotaEfetiva}|${aliquotaInterestadualMI}\n`;
+    });
+}
         }
         console.log('Gerando txt')
 
-        //GERA TXT NO ARQUIVO DO PROJETO
-        fs.writeFile(fileName, fileContent, (writeError) => {
+            //GERA TXT NO ARQUIVO DO PROJETO
+            fs.writeFile(fileName, fileContent, (writeError) => {
             if (!writeError) {
+                gerarLog(fileName, fileContent.length,(logError, logSucessMessage) => {
+                    if(logError){
+                        console.error('Erro ao gerar arquivo log', logError);
+                    } else {
+                        console.log(logSucessMessage);
+                    }
+                });
                 callback(null, `Arquivo ${fileName} gerado com sucesso.`);
             } else {
                 callback(writeError);
@@ -134,17 +193,21 @@ async function exportarDadosParaTXTSync(callback) {
         });
     } catch (error) {
         callback(error);
+    } finally {
+        if (connection) {
+            connection.release(); // Liberamos a conexão de volta para o pool
+        }
     }
 }
 
 
-// exportarDadosParaTXTSync((error, successMessage) => {
-//     if (error) {
-//         console.error('Erro ao exportar dados para o arquivo TXT:', error);
-//     } else {
-//         console.log("Executando gerador de txt", successMessage);
-//     }
-// });
+exportarDadosParaTXTSync((error, successMessage) => {
+    if (error) {
+        console.error('Erro ao exportar dados para o arquivo TXT:', error);
+    } else {
+        console.log("Executando gerador de txt", successMessage);
+    }
+});
 
 module.exports = {
     exportarDadosParaTXTSync

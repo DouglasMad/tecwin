@@ -1,27 +1,34 @@
 const axios = require('axios');
 const mysql = require('mysql');
 
-// Configuração do banco de dados MySQL
-const db = mysql.createConnection({
+// Configuração do pool de conexões MySQL
+const pool = mysql.createPool({
+    connectionLimit: 10, // Limite máximo de conexões
     host: 'localhost',
     user: 'root',
     password: '123456',
     database: 'db_ncm'
 });
 
-db.connect(err => {
-    if (err) {
-        console.error('Erro ao conectar no banco de dados:', err);
-        return;
-    }
-    console.log('Conexão com o banco de dados estabelecida com sucesso.');
-});
+// Função para obter uma conexão do pool
+const getConnectionFromPool = () => {
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+            if (err) {
+                console.error('Erro ao obter conexão do pool:', err);
+                reject(err);
+            } else {
+                resolve(connection);
+            }
+        });
+    });
+};
 
 // Função para verificar se um NCM já foi processado
-async function ncmProcessed(ncm) {
+async function ncmProcessed(connection, ncm) {
     return new Promise((resolve, reject) => {
         const query = 'SELECT * FROM st_ncm WHERE ncmid = ?';
-        db.query(query, [ncm], (err, result) => {
+        connection.query(query, [ncm], (err, result) => {
             if (err) {
                 console.error("Erro ao verificar NCM processado:", err);
                 reject(err);
@@ -33,7 +40,7 @@ async function ncmProcessed(ncm) {
 }
 
 // Função para salvar dados no banco de dados
-async function saveDataToDatabase(stData, ncm) {
+async function saveDataToDatabase(connection, stData, ncm) {
     for (const item of stData) {
         const values = [
             item.ufRemetente,
@@ -52,7 +59,7 @@ async function saveDataToDatabase(stData, ncm) {
 
         const query = 'INSERT INTO st_ncm (ufRemetente, ufDestinatario, aliquotaDestino, aliquotaEfetiva, aliquotaInterestadual, aliquotaInterestadualMI, mvaOriginal, mvaAjustadaMI, mvaAjustada, cest, ncmid, link) VALUES ?';
         await new Promise((resolve, reject) => {
-            db.query(query, [[values]], (err, result) => {
+            connection.query(query, [[values]], (err, result) => {
                 if (err) {
                     console.error('Erro ao salvar dados no banco:', err);
                     reject(err);
@@ -66,10 +73,10 @@ async function saveDataToDatabase(stData, ncm) {
 }
 
 // Função para recuperar todos os NCMs da tabela tec_produto, sem repetição
-async function getAllNcms() {
+async function getAllNcms(connection) {
     return new Promise((resolve, reject) => {
         const query = 'SELECT DISTINCT ncm FROM tec_produto';
-        db.query(query, (err, result) => {
+        connection.query(query, (err, result) => {
             if (err) {
                 console.error("Erro ao buscar NCMs:", err);
                 reject(err);
@@ -82,45 +89,48 @@ async function getAllNcms() {
 
 // Função principal para realizar a operação
 async function apist() {
-    const ncms = await getAllNcms();
-    console.log(`Total de NCMs únicos encontrados: ${ncms.length}`);
-    if(ncms.length === 0) {
-        console.log("Nenhum NCM para processar.");
-        return;
-    }
-    for (const row of ncms) {
-        const ncm = row.ncm;
-        const processed = await ncmProcessed(ncm);
+    let connection;
+    try {
+        connection = await getConnectionFromPool(); // Obtemos a conexão do pool
 
-        if (!processed) {
-            const uf_saida = "RJ";
-            const chave = "TFACS-Q4LVT-XYYNF-ZNW59";
-            const cliente = "02119874";
-            const formato = "json";
+        const ncms = await getAllNcms(connection);
+        console.log(`Total de NCMs únicos encontrados: ${ncms.length}`);
+        if (ncms.length === 0) {
+            console.log("Nenhum NCM para processar.");
+            return;
+        }
+        for (const row of ncms) {
+            const ncm = row.ncm;
+            const processed = await ncmProcessed(connection, ncm);
 
-            try {
-                const response = await axios.get(`https://ics.multieditoras.com.br/ics/st/${ncm}/${uf_saida}?chave=${chave}&cliente=${cliente}&formato=${formato}`);
-                const stData = response.data.st;
-                await saveDataToDatabase(stData, ncm);
-            } catch (error) {
-                console.error('Erro ao fazer a chamada NCM:', ncm, error.message);
+            if (!processed) {
+                const uf_saida = "RJ";
+                const chave = "TFACS-Q4LVT-XYYNF-ZNW59";
+                const cliente = "02119874";
+                const formato = "json";
+
+                try {
+                    const response = await axios.get(`https://ics.multieditoras.com.br/ics/st/${ncm}/${uf_saida}?chave=${chave}&cliente=${cliente}&formato=${formato}`);
+                    const stData = response.data.st;
+                    await saveDataToDatabase(connection, stData, ncm);
+                } catch (error) {
+                    console.error('Erro ao fazer a chamada NCM:', ncm, error.message);
+                }
+            } else {
+                console.log(`NCM já processado: ${ncm}`);
             }
-        } else {
-            console.log(`NCM já processado: ${ncm}`);
+        }
+    } catch (error) {
+        console.error("Erro durante a execução:", error);
+    } finally {
+        if (connection) {
+            console.log('terminado')
+            connection.release(); // Liberamos a conexão de volta para o pool
         }
     }
 }
 
-// // Executa a função principal manualmente
-// apist().then(() => {
-//     console.log("Processamento concluído.");
-//     db.end(); // Encerra a conexão com o banco de dados ao final do processamento
-// }).catch(err => {
-//     console.error("Erro durante a execução:", err);
-//     db.end(); // Encerra a conexão com o banco de dados em caso de erro
-// });
-
-
+// apist();
 module.exports = {
     apist
-}
+};

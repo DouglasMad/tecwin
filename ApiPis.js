@@ -1,35 +1,40 @@
 const axios = require('axios');
 const mysql = require('mysql');
 
-// Configuração do banco de dados MySQL
-const db = mysql.createConnection({
+// Configuração do pool de conexões MySQL
+const pool = mysql.createPool({
+    connectionLimit: 10, // Limite máximo de conexões
     host: 'localhost',
     user: 'root',
     password: '123456',
     database: 'db_ncm'
 });
 
-// Conectar ao banco de dados
-db.connect(err => {
-    if (err) {
-        console.error('Erro ao conectar ao banco de dados:', err);
-        return;
-    }
-    console.log('Conexão com o banco de dados estabelecida.');
-    // main();
-});
+// Função para obter uma conexão do pool
+const getConnectionFromPool = () => {
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+            if (err) {
+                console.error('Erro ao obter conexão do pool:', err);
+                reject(err);
+            } else {
+                resolve(connection);
+            }
+        });
+    });
+};
 
 // Cache para NCMs já processados
 const ncmProcessados = new Set();
 
-async function ncmJaProcessado(ncm) {
+async function ncmJaProcessado(connection, ncm) {
     if (ncmProcessados.has(ncm)) {
         return true;
     }
 
     return new Promise((resolve, reject) => {
         const query = 'SELECT 1 FROM tec_ipi WHERE ncm_codigo = ? LIMIT 1';
-        db.query(query, [ncm], (err, result) => {
+        connection.query(query, [ncm], (err, result) => {
             if (err) {
                 reject(err);
                 return;
@@ -43,10 +48,10 @@ async function ncmJaProcessado(ncm) {
     });
 }
 
-async function inserirNoBanco(dados) {
+async function inserirNoBanco(connection, dados) {
     if (dados.length > 0 && dados[0].ncm && dados[0].ncm.codigo) {
         const dado = dados[0];
-        const jaProcessado = await ncmJaProcessado(dado.ncm.codigo);
+        const jaProcessado = await ncmJaProcessado(connection, dado.ncm.codigo);
         if (jaProcessado) {
             console.log(`NCM já processado: ${dado.ncm.codigo}`);
             return;
@@ -78,7 +83,7 @@ async function inserirNoBanco(dados) {
             dado.necessidadeLI
         ];
 
-        db.query(query, valores, (erro, result) => {
+        connection.query(query, valores, (erro, result) => {
             if (erro) {
                 console.error('Erro ao inserir dados:', erro);
             } else {
@@ -90,11 +95,11 @@ async function inserirNoBanco(dados) {
     }
 }
 
-async function buscarNCMsUnicos() {
+async function buscarNCMsUnicos(connection) {
     const query = 'SELECT DISTINCT ncm FROM tec_produto';
     try {
         const resultados = await new Promise((resolve, reject) => {
-            db.query(query, (err, result) => {
+            connection.query(query, (err, result) => {
                 if (err) reject(err);
                 else resolve(result);
             });
@@ -107,7 +112,7 @@ async function buscarNCMsUnicos() {
     }
 }
 
-async function fazerRequisicaoAPI(ncm) {
+async function fazerRequisicaoAPI(connection, ncm) {
     const chave = 'TFACS-Q4LVT-XYYNF-ZNW59'; // Substitua com sua chave API real
     const cliente = '02119874'; // Substitua com o ID do seu cliente
     const formato = 'json';
@@ -118,19 +123,20 @@ async function fazerRequisicaoAPI(ncm) {
         const data = response.data;
 
         if (data.tec && Array.isArray(data.tec)) {
-            await inserirNoBanco(data.tec); // Passa todos os dados para inserirNoBanco
+            await inserirNoBanco(connection, data.tec); // Passa todos os dados para inserirNoBanco
         }
     } catch (error) {
-        console.error('Erro ao fazer a chamada API para o NCM', ncm, ':', error);
+        console.error('Erro ao fazer a chamada API para o NCM', ncm, ':');
+        // console.error('Erro ao fazer a chamada API para o NCM', ncm, ':', error);
     }
 }
 
-async function processarNCMsEmParalelo(ncms, limiteParalelo = 10) {
+async function processarNCMsEmParalelo(connection, ncms, limiteParalelo = 10) {
     for (let i = 0; i < ncms.length; i += limiteParalelo) {
         const promessas = ncms.slice(i, i + limiteParalelo).map(ncm =>
-            ncmJaProcessado(ncm).then(jaProcessado => {
+            ncmJaProcessado(connection, ncm).then(jaProcessado => {
                 if (!jaProcessado) {
-                    return fazerRequisicaoAPI(ncm).catch(e => {
+                    return fazerRequisicaoAPI(connection, ncm).catch(e => {
                         console.error('Erro com o NCM:', ncm, e);
                     });
                 }
@@ -141,11 +147,23 @@ async function processarNCMsEmParalelo(ncms, limiteParalelo = 10) {
 }
 
 async function main() {
-    const ncmsUnicos = await buscarNCMsUnicos();
-    await processarNCMsEmParalelo(ncmsUnicos);
+    let connection;
+    try {
+        connection = await getConnectionFromPool(); // Obtemos a conexão do pool
+        const ncmsUnicos = await buscarNCMsUnicos(connection);
+        await processarNCMsEmParalelo(connection, ncmsUnicos);
+    } catch (error) {
+        console.error("Erro durante a execução:", error);
+    } finally {
+        if (connection) {
+            console.log('terminado')
+            connection.release(); // Liberamos a conexão de volta para o pool
+        }
+    }
 }
 
 // main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
+
 
 
 module.exports = {
