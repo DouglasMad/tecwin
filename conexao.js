@@ -34,7 +34,7 @@ const getConnectionFromPool = () => {
 
 // Função para atualizar o status no arquivo HTML
 async function atualizarStatusHTML(apiId, novoStatus) {
-  const filePath = 'C:/Users/Administrador.PLASSER/Documents/tecwin/index.html';
+  const filePath = 'C:/bkp/tecwin/index.html';
 
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -64,7 +64,7 @@ async function atualizarStatusHTML(apiId, novoStatus) {
 
 // Função para atualizar o console no arquivo HTML
 async function atualizarConsoleHTML(apiId, novoStatus) {
-  const filePath = 'C:/Users/Administrador.PLASSER/Documents/tecwin/index.html';
+  const filePath = 'C:/bkp/tecwin/index.html';
 
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -100,6 +100,18 @@ async function reiniciarAplicacao() {
   await atualizarConsoleHTML('terceira', 'Aguardando iniciar execução');
 }
 
+async function exportarDadosParaTXTAsync() {
+  return new Promise((resolve, reject) => {
+    exportarDadosParaTXTSync((error, successMessage) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(successMessage);
+      }
+    });
+  });
+}
+
 async function execConect() {
   try {
     const connection = await getConnectionFromPool(); // Obtemos a conexão do pool
@@ -121,13 +133,13 @@ async function execConect() {
     // Verificar e executar a terceira API
     await verificarEExecutarTerceiraAPI(connection);
 
-    await exportarDadosParaTXTSync((error, successMessage) => {
-      if (error) {
-          console.error('Erro ao exportar dados para o arquivo TXT:', error);
-      } else {
-          console.log("Executando gerador de txt", successMessage);
-      }
-  });
+    // Após todas as APIs serem processadas, executar o gerador de txt
+    await exportarDadosParaTXTAsync().then((successMessage) => {
+      console.log("Executando gerador de txt", successMessage);
+    }).catch((error) => {
+      console.error('Erro ao exportar dados para o arquivo TXT:', error);
+    });
+    
 
     // Reinicia os status html da aplicação
     await reiniciarAplicacao();
@@ -170,9 +182,9 @@ async function verificarEExecutarSegundaAPI(connection) {
     });
     updateIpiEntBasedOnCstIpi()
 
-    await atualizarStatus(connection, 'Segunda API', 'concluido');
-    await atualizarStatusHTML('segunda', 'Concluido');
   }
+  await atualizarStatus(connection, 'Segunda API', 'concluido');
+  await atualizarStatusHTML('segunda', 'Concluido');
 }
 
 async function verificarEExecutarTerceiraAPI(connection) {
@@ -181,19 +193,20 @@ async function verificarEExecutarTerceiraAPI(connection) {
     await atualizarStatusHTML('terceira', 'Em andamento');
     await atualizarStatus(connection, 'Terceira API', 'em_andamento');
 
+    await processarTodosNCMs()
     await main().then(() => {
       console.log("Processamento concluído. apiPis");
     }).catch(err => {
       console.error("Erro durante a execução: apiPis");
     });
 
-    await processarTodosNCMs()
-
-    await atualizarStatus(connection, 'Terceira API', 'concluido');
-    await atualizarStatusHTML('terceira', 'Concluido');
-    await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
   }
+  
+  await atualizarStatus(connection, 'Terceira API', 'concluido');
+  await atualizarStatusHTML('terceira', 'Concluido');
+  await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
 }
+
 
 module.exports = {
   execConect: execConect,

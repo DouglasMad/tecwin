@@ -32,7 +32,7 @@ const getConnectionFromPool = () => {
 async function gerarLog(arquivoTxt, tamanhoTxt, callback) {
 const currentDate = new Date();
 const formattedDate = currentDate.toLocaleString();
-const directoryPath = 'C:/Users/Administrador.PLASSER/Documents/exportartecwin/teste/'
+const directoryPath = 'C:/bkp/exportacoes/'
 
 const logContent = `Último arquivo ${arquivoTxt} gerado com sucesso. \nTamanho do arquivo: ${tamanhoTxt} kb.\n Data e hora: ${formattedDate}`;
 
@@ -120,7 +120,7 @@ async function consultarIcmsStPorNcm(connection, ncm) {
 async function exportarDadosParaTXTSync(callback) {
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
-    const directoryPath = 'C:/Users/Administrador.PLASSER/Documents/exportartecwin/teste/'
+    const directoryPath = 'C:/bkp/exportacoes/'
     const fileName = path.join(directoryPath, `intTecwin.txt`);
     let fileContent = '';
 
@@ -201,13 +201,13 @@ if (icmsSt.length > 0 && aliquota.length > 0 && (pisPasep.length > 0 || cofins.l
 }
 
 
-exportarDadosParaTXTSync((error, successMessage) => {
-    if (error) {
-        console.error('Erro ao exportar dados para o arquivo TXT:', error);
-    } else {
-        console.log("Executando gerador de txt", successMessage);
-    }
-});
+// exportarDadosParaTXTSync((error, successMessage) => {
+//     if (error) {
+//         console.error('Erro ao exportar dados para o arquivo TXT:', error);
+//     } else {
+//         console.log("Executando gerador de txt", successMessage);
+//     }
+// });
 
 module.exports = {
     exportarDadosParaTXTSync
