@@ -11,12 +11,23 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-pool.getConnection((err, connection) => {
-    if (err) throw err; // não conseguiu se conectar ao banco de dados
+const getConnectionFromPool = () => {
+    return new Promise((resolve, reject) => {
+      pool.getConnection((err, connection) => {
+        if (err) {
+          console.error('Erro ao obter conexão do pool:', err);
+          reject(err);
+        } else {
+          resolve(connection);
+        }
+      });
+    });
+  };
 
-    console.log('Conectado ao banco de dados.');
 
+async function atualizaNcmFinal() {
     const selectUniqueNcmQuery = `SELECT DISTINCT ncm FROM tec_produto`;
+    const connection = await getConnectionFromPool(); // Obtemos a conexão do pool
 
     connection.query(selectUniqueNcmQuery, (err, results) => {
         if (err) throw err;
@@ -41,4 +52,6 @@ pool.getConnection((err, connection) => {
     });
 
     connection.release(); // libera a conexão
-});
+}
+
+atualizaNcmFinal();
