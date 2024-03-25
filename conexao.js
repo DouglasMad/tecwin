@@ -9,6 +9,9 @@ const {updateAjustarAliquotaBasedOnUfDestinatario} = require('./ajustast')
 const cron = require('node-cron');
 const mysql = require('mysql');
 const fs = require('fs');
+const { processaNCMs } = require('./atualiza');
+const { atualizaNcmFinal } = require('./atualizancm');
+const { atualizarDadosST } = require('./dadosst');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -131,12 +134,16 @@ async function execConect() {
   });
 
     // Reinicia os status html da aplicação
-    await reiniciarAplicacao();
+    // await reiniciarAplicacao();
   } catch (error) {
     console.error(error);
   }
 }
-
+// Ordem de execução
+//importNcm, importSt, updatIpiEntBasedOnCstIpi
+//apiSt, apiPis, apiPisDeb, atualizardadosst
+//ajustaipi, ajustaSt, atualizaNcm, atualiza, ajustaCst
+//exportação
 async function verificarEExecutarPrimeiraAPI(connection) {
   const statusImportNCM = await obterStatus(connection, 'Primeira API');
   if (statusImportNCM !== 'concluido') {
@@ -154,9 +161,9 @@ async function verificarEExecutarPrimeiraAPI(connection) {
     }).catch(err => {
       console.error("Erro durante a execução: ImportCst");
     });
-    await atualizarStatus(connection, 'Primeira API', 'concluido');
-    await atualizarStatusHTML('primeira', 'Concluido');
   }
+  await atualizarStatus(connection, 'Primeira API', 'concluido');
+  await atualizarStatusHTML('primeira', 'Concluido');
 }
 
 async function verificarEExecutarSegundaAPI(connection) {
@@ -165,15 +172,21 @@ async function verificarEExecutarSegundaAPI(connection) {
     await atualizarStatusHTML('segunda', 'Em andamento');
     await atualizarStatus(connection, 'Segunda API', 'em_andamento');
     await apist().then(() => {
-      console.log("Processamento concluído.");
+      console.log("Processamento concluído. apiSt");
     }).catch(err => {
-      console.error("Erro durante a execução:");
+      console.error("Erro durante a execução: apiSt");
     });
-    
-
-    await atualizarStatus(connection, 'Segunda API', 'concluido');
-    await atualizarStatusHTML('segunda', 'Concluido');
+    await main().then(() => {
+      console.log("Processamento concluído. apiPis");
+    }).catch(err => {
+      console.error("Erro durante a execução: apiPis");
+    });
+    updateAjustarAliquotaBasedOnUfDestinatario()
+    atualizarDadosST();
+    await processarTodosNCMs()
   }
+  await atualizarStatus(connection, 'Segunda API', 'concluido');
+  await atualizarStatusHTML('segunda', 'Concluido');
 }
 
 async function verificarEExecutarTerceiraAPI(connection) {
@@ -181,19 +194,14 @@ async function verificarEExecutarTerceiraAPI(connection) {
   if (statusApiPis !== 'concluido') {
     await atualizarStatusHTML('terceira', 'Em andamento');
     await atualizarStatus(connection, 'Terceira API', 'em_andamento');
+    processaNCMs();
+    atualizaNcmFinal();
 
-    await main().then(() => {
-      console.log("Processamento concluído. apiPis");
-    }).catch(err => {
-      console.error("Erro durante a execução: apiPis");
-    });
-    updateAjustarAliquotaBasedOnUfDestinatario()
-    await processarTodosNCMs()
 
-    await atualizarStatus(connection, 'Terceira API', 'concluido');
-    await atualizarStatusHTML('terceira', 'Concluido');
-    await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
   }
+  await atualizarStatus(connection, 'Terceira API', 'concluido');
+  await atualizarStatusHTML('terceira', 'Concluido');
+  await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
 }
 
 module.exports = {

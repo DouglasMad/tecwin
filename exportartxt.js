@@ -100,9 +100,9 @@ async function consultarCofinsPorNcm(connection, ncm) {
 }
 
 // Função para consultar ICMS/ST por NCM
-async function consultarIcmsStPorNcm(connection, ncm) {
+async function consultarIcmsStPorNcm(connection, codigoProduto) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT DISTINCT ufDestinatario, cst, aliquotaEfetiva, aliquotaInterestadualMI FROM st_ncm JOIN tec_stcst ON ufDestinatario = uf AND ncmid = ncm WHERE ncmid =  ? ', [ncm], (icmsQueryError, icmsRows) => {
+        connection.query('SELECT DISTINCT u.ufDestinatario, u.cst, u.aliquotaEfetiva, u.aliquotaInterestadualMI FROM unica u JOIN tec_produto p ON p.codigo = u.codigoProduto WHERE p.codigo = ?', [codigoProduto], (icmsQueryError, icmsRows) => {
             if (icmsQueryError) {
                 reject(icmsQueryError);
                 return;
@@ -130,7 +130,7 @@ async function exportarDadosParaTXTSync(callback) {
         for (const produto of produtos) {
             const pisPasep = await consultarPisPasepPorNcm(connection, produto.ncm);
             const cofins = await consultarCofinsPorNcm(connection, produto.ncm);
-            const icmsSt = await consultarIcmsStPorNcm(connection, produto.ncm);
+            const icmsSt = await consultarIcmsStPorNcm(connection, produto.codigo);
             const aliquota = await consultarAliquitaPorNcm(connection, produto.ncm);
 
             // Verifica se há dados correspondentes nas consultas de PIS/PASEP, COFINS e ICMS/ST

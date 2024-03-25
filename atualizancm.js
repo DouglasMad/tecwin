@@ -54,4 +54,7 @@ async function atualizaNcmFinal() {
     connection.release(); // libera a conexão
 }
 
-atualizaNcmFinal();
+// atualizaNcmFinal();
+module.exports = {
+  atualizaNcmFinal
+}

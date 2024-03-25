@@ -54,4 +54,8 @@ async function atualizarDadosST() {
 }
 
 // Executa a função de atualização
-atualizarDadosST();
+// atualizarDadosST();
+
+module.exports = {
+    atualizarDadosST
+}
