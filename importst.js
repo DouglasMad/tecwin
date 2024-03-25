@@ -1,33 +1,40 @@
 const fs = require('fs').promises;
 const mysql = require('mysql');
 
+// Criando o pool de conexões
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'db_ncm',
+    port: '3306',
+    waitForConnections: true,
+    connectionLimit: 0,
+    queueLimit: 0
+});
+
+// Função para conectar ao banco de dados usando o pool
 const connectDB = () => {
     return new Promise((resolve, reject) => {
-        const db = mysql.createConnection({
-            host: 'localhost',
-            user: 'root',
-            password: '123456',
-            database: 'db_ncm'
-        });
-
-        db.connect(err => {
+        pool.getConnection((err, connection) => {
             if (err) {
-                console.error('Erro ao conectar ao banco de dados:', err);
+                console.error('Erro ao obter conexão do pool:', err);
                 reject(err);
             } else {
-                console.log("Conectado ao banco de dados com sucesso!");
-                resolve(db);
+                console.log('Conexão obtida do pool.');
+                resolve(connection);
             }
         });
     });
 };
 
-const inserirProduto = (db, codigo, ncm, nomeProduto, unidadeMedida, cst, uf) => {
+// Função para inserir um produto no banco de dados
+const inserirProduto = (connection, codigo, ncm, nomeProduto, unidadeMedida, cst, uf) => {
     return new Promise((resolve, reject) => {
-        const ncmSemPontos = ncm.replace(/\./g, ''); // Continua removendo os pontos do NCM
+        const ncmSemPontos = ncm.replace(/\./g, ''); // Remove os pontos do NCM
 
         const sql = 'INSERT INTO tec_stcst (codigo, ncm, nmproduto, unidade, cst, uf) VALUES (?, ?, ?, ?, ?, ?)';
-        db.query(sql, [codigo, ncmSemPontos, nomeProduto, unidadeMedida, cst, uf], (err) => {
+        connection.query(sql, [codigo, ncmSemPontos, nomeProduto, unidadeMedida, cst, uf], (err) => {
             if (err) {
                 console.error(`Erro ao inserir o produto com código ${codigo}:`, err);
                 reject(err);
@@ -39,9 +46,12 @@ const inserirProduto = (db, codigo, ncm, nomeProduto, unidadeMedida, cst, uf) =>
     });
 };
 
+// Função principal para importar os dados
 const importst = async () => {
+    let connection;
+
     try {
-        const db = await connectDB();
+        connection = await connectDB(); // Obtém uma conexão do pool
 
         console.log('Iniciando leitura do arquivo...');
 
@@ -52,23 +62,26 @@ const importst = async () => {
 
         for (const linha of linhas) {
             const [codigo, ncm, nomeProduto, unidadeMedida, cst, uf] = linha.split('|');
-            if (codigo && ncm && nomeProduto && unidadeMedida && cst && uf) { // Verifica se todos os campos estão presentes
+            if (codigo && ncm && nomeProduto && unidadeMedida && cst && uf) {
                 console.log(`Processando: ${linha}`);
-                await inserirProduto(db, codigo, ncm, nomeProduto, unidadeMedida, cst, uf);
+                await inserirProduto(connection, codigo, ncm, nomeProduto, unidadeMedida, cst, uf);
             } else {
                 console.log(`Linha incompleta ignorada: ${linha}`);
             }
         }
 
         console.log('Importação finalizada.');
-
-        db.end();
     } catch (err) {
         console.error('Erro durante a execução:', err);
+    } finally {
+        if (connection) {
+            connection.release(); // Libera a conexão de volta para o pool
+            console.log('Conexão liberada.');
+        }
     }
 };
 
-// importst(); // Adicionado para executar a função diretamente
+ importst(); // Adicionado para executar a função diretamente
 
 module.exports = {
     importst

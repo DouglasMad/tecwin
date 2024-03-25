@@ -1,40 +1,67 @@
 const axios = require('axios');
 const mysql = require('mysql');
 
-// Configuração do banco de dados MySQL
-const db = mysql.createConnection({
+// Configuração do pool de conexões MySQL
+const pool = mysql.createPool({
+    connectionLimit: 10, // Limite máximo de conexões
     host: 'localhost',
     user: 'root',
     password: '123456',
     database: 'db_ncm'
 });
 
+// Função para obter uma conexão do pool
+const getConnectionFromPool = () => {
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+            if (err) {
+                console.error('Erro ao obter conexão do pool:', err);
+                reject(err);
+            } else {
+                resolve(connection);
+            }
+        });
+    });
+};
+
 // Função para processar todos os NCMs
 async function processarTodosNCMs() {
-    console.log('Iniciando o processamento de todos os NCMs...');
+    let connection;
+    try {
+        connection = await getConnectionFromPool(); // Obtemos a conexão do pool
+        console.log('Iniciando o processamento de todos os NCMs...');
 
-    // Consultar a tabela tec_produto para obter todos os NCMs
-    db.query('SELECT ncm FROM tec_produto', async (err, results) => {
-        if (err) {
-            console.error('Erro ao consultar a tabela tec_produto:', err);
-            return;
-        }
-
-        for (let i = 0; i < results.length; i++) {
-            try {
-                await processarNCM(results[i].ncm);
-            } catch (error) {
-                console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error);
-                // Continua para o próximo NCM mesmo que encontre um erro
+        // Consultar a tabela tec_produto para obter todos os NCMs
+        connection.query('SELECT ncm FROM tec_produto', async (err, results) => {
+            if (err) {
+                console.error('Erro ao consultar a tabela tec_produto:', err);
+                return;
             }
-        }
 
-        console.log('Processamento de todos os NCMs concluído.');
-    });
+            for (let i = 0; i < results.length; i++) {
+                try {
+                    await processarNCM(connection, results[i].ncm);
+                } catch (error) {
+                    console.error(`Erro ao processar o NCM: ${results[i].ncm}`);
+                    // console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error);
+                    // Continua para o próximo NCM mesmo que encontre um erro
+                }
+            }
+
+            console.log('Processamento de todos os NCMs concluído.');
+        });
+    } catch (error) {
+        console.error("Erro durante a execução:", error);
+    } finally {
+        if (connection) {
+            console.log('terminado')
+            connection.release(); // Liberamos a conexão de volta para o pool
+        }
+    }
 }
 
 // Função para processar um NCM específico
-async function processarNCM(ncm) {
+async function processarNCM(connection, ncm) {
     const chave = 'TFACS-Q4LVT-XYYNF-ZNW59';
     const cliente = '02119874';
     const url = `https://ics.multieditoras.com.br/ics/pis?chave=${chave}&cliente=${cliente}&ncm=${ncm}`;
@@ -49,7 +76,7 @@ async function processarNCM(ncm) {
             const regra = resultadoFiltrado[0];
             // Verificar se já existe um registro com o mesmo idMercadoria
             const sqlVerificacao = 'SELECT * FROM tec_Pisdeb WHERE idMercadoria = ?';
-            db.query(sqlVerificacao, [regra.idMercadoria], (err, result) => {
+            pool.query(sqlVerificacao, [regra.idMercadoria], (err, result) => {
                 if (err) {
                     console.error('Erro ao verificar o idMercadoria na tabela tec_Pisdeb:', err);
                     return;
@@ -82,7 +109,7 @@ async function processarNCM(ncm) {
                         regra.cst.length > 0 ? regra.cst[0] : null // Armazena apenas o primeiro valor do array cst
                     ];
 
-                    db.query(sqlInsercao, valuesInsercao, (err, result) => {
+                    pool.query(sqlInsercao, valuesInsercao, (err, result) => {
                         if (err) {
                             console.error('Erro ao inserir dados na tabela tec_Pisdeb:', err);
                             return;
@@ -100,6 +127,9 @@ async function processarNCM(ncm) {
         throw error; // Lança o erro para ser capturado pelo try/catch do loop
     }
 }
+
+// //Executar manualmente
+processarTodosNCMs()
 
 // Exporta a função processarTodosNCMs() para uso em outros arquivos
 module.exports = {
