@@ -111,9 +111,6 @@ async function execConect() {
 
     const tabelasParaReinicar = ['dadosncm', 'dadosst', 'st_ncm', 'tec_ipi', 'tec_pisdeb','tec_produto', 'tec_stcst', 'unica']
 
-    // Verificar e executar a terceira API
-    await verificarEExecutarTerceiraAPI(connection);
-
     // Reinicia os bancos de dados st, tec_produto
     await reiniciarBancoAsync(connection);
     await reiniciarst(connection);
