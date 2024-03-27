@@ -12,6 +12,7 @@ const fs = require('fs');
 const { processaNCMs } = require('./atualiza');
 const { atualizaNcmFinal } = require('./atualizancm');
 const { atualizarDadosST } = require('./dadosst');
+const { ajustaCstIpi } = require('./ajustacst');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -196,12 +197,20 @@ async function verificarEExecutarTerceiraAPI(connection) {
     await atualizarStatus(connection, 'Terceira API', 'em_andamento');
     processaNCMs();
     atualizaNcmFinal();
+    ajustaCstIpi()
 
 
   }
   await atualizarStatus(connection, 'Terceira API', 'concluido');
   await atualizarStatusHTML('terceira', 'Concluido');
   await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
+  await exportarDadosParaTXTSync((error, successMessage) => {
+    if (error) {
+        console.error('Erro ao exportar dados para o arquivo TXT:', error);
+    } else {
+        console.log("Executando gerador de txt", successMessage);
+    }
+});
 }
 
 module.exports = {
