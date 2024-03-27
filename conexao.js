@@ -39,7 +39,7 @@ const getConnectionFromPool = () => {
 
 // Função para atualizar o status no arquivo HTML
 async function atualizarStatusHTML(apiId, novoStatus) {
-  const filePath = 'C:/Users/Administrador.PLASSER/Documents/tecwin/index.html';
+  const filePath = 'C:/bkp/tecwin/index.html';
 
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -69,7 +69,7 @@ async function atualizarStatusHTML(apiId, novoStatus) {
 
 // Função para atualizar o console no arquivo HTML
 async function atualizarConsoleHTML(apiId, novoStatus) {
-  const filePath = 'C:/Users/Administrador.PLASSER/Documents/tecwin/index.html';
+  const filePath = 'C:/bkp/tecwin/index.html';
 
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -111,6 +111,8 @@ async function execConect() {
 
     const tabelasParaReinicar = ['dadosncm', 'dadosst', 'st_ncm', 'tec_ipi', 'tec_pisdeb','tec_produto', 'tec_stcst', 'unica']
 
+    // Verificar e executar a terceira API
+    await verificarEExecutarTerceiraAPI(connection);
 
     // Reinicia os bancos de dados st, tec_produto
     await reiniciarBancoAsync(connection);

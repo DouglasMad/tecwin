@@ -171,7 +171,7 @@ const inserirProduto = async (codigo, ncm, nomeProduto, unidadeMedida, cstipi) =
 const lerArquivo = async () => {
     try {
         console.log('Lendo arquivo...');
-        const data = await fs.readFile('C:/WKRadar/BI/Registros/tecwinncm.txt', 'utf8');
+        const data = await fs.readFile('C:/bkp/tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
         console.log(`Encontradas ${linhas.length} linhas no arquivo.`);
 
