@@ -14,104 +14,91 @@ db.connect(err => {
         console.error('Erro ao conectar ao banco de dados:', err);
         return;
     }
-    console.log('Conexão com o banco de dados estabelecida.');
-});
+    console.log('Conexão com o banco de dados estabelecida com sucesso.');
 
-// Cache para NCMs já processados
-const ncmProcessedCache = new Set();
-
-async function ncmProcessed(ncm) {
-    if (ncmProcessedCache.has(ncm)) {
-        return true;
-    }
-
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT 1 FROM st_ncm WHERE ncmid = ? LIMIT 1';
-        db.query(query, [ncm], (err, result) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            const processed = result.length > 0;
-            if (processed) {
-                ncmProcessedCache.add(ncm);
-            }
-            resolve(processed);
-        });
-    });
-}
-
-async function saveDataToDatabase(stData, ncm) {
-    if (!stData || stData.length === 0) {
-        console.log('Nenhum dado para inserir no banco de dados.');
-        return;
-    }
-
-    const values = stData.map(item => [
-        item.ufRemetente,
-        item.ufDestinatario,
-        item.aliquotaDestino,
-        item.aliquotaEfetiva,
-        item.aliquotaInterestadual,
-        item.aliquotaInterestadualMI,
-        item.mvaOriginal,
-        item.mvaAjustadaMI,
-        item.mvaAjustada,
-        item.cest,
-        ncm,
-        item.link
-    ]);
-
-    const query = 'INSERT INTO st_ncm (ufRemetente, ufDestinatario, aliquotaDestino, aliquotaEfetiva, aliquotaInterestadual, aliquotaInterestadualMI, mvaOriginal, mvaAjustadaMI, mvaAjustada, cest, ncmid, link) VALUES ?';
-
-    db.query(query, [values], (err, result) => {
+    // Consultar a tabela tec_produto para obter todos os NCMs
+    db.query('SELECT ncm FROM tec_produto', async (err, results) => {
         if (err) {
-            console.error('Erro ao inserir dados:', err);
+            console.error('Erro ao consultar a tabela tec_produto:', err);
             return;
         }
-        console.log(`Dados inseridos com sucesso para o NCM: ${ncm}`);
-    });
-}
 
-async function getAllUniqueNcms() {
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT DISTINCT ncm FROM tec_produto';
-        db.query(query, (err, result) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve(result.map(row => row.ncm));
-        });
-    });
-}
-
-async function apist() {
-    const ncms = await getAllUniqueNcms();
-    for (const ncm of ncms) {
-        const processed = await ncmProcessed(ncm);
-        if (!processed) {
-            const uf_saida = "RJ";
-            const chave = "TFACS-Q4LVT-XYYNF-ZNW59";
-            const cliente = "02119874";
-            const formato = "json";
-            const url = `https://ics.multieditoras.com.br/ics/st/${ncm}/${uf_saida}?chave=${chave}&cliente=${cliente}&formato=${formato}`;
-
+        for (let i = 0; i < results.length; i++) {
             try {
-                const response = await axios.get(url);
-                const stData = response.data.st;
-                console.log('Dados recebidos da API para NCM:', ncm, stData);
-                await saveDataToDatabase(stData, ncm);
+                await processarNCM(results[i].ncm);
             } catch (error) {
-                console.error('Erro ao fazer a chamada API para o NCM:', ncm, error.message);
+                console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error);
+                // Continua para o próximo NCM mesmo que encontre um erro
             }
-        } else {
-            console.log(`NCM já processado: ${ncm}`);
         }
+
+        console.log('Processamento de todos os NCMs concluído.');
+    });
+});
+
+async function processarNCM(ncm) {
+    const chave = 'TFACS-Q4LVT-XYYNF-ZNW59';
+    const cliente = '02119874';
+    const url = `https://ics.multieditoras.com.br/ics/pis?chave=${chave}&cliente=${cliente}&ncm=${ncm}`;
+
+    try {
+        const response = await axios.get(url);
+        const data = response.data;
+
+        const resultadoFiltrado = data.pis.filter(regra => regra.nomeRegra === "Alíquota Básica - Não Cumulativo vendendo para não cumulativo");
+
+        if (resultadoFiltrado.length > 0) {
+            const regra = resultadoFiltrado[0];
+            // Verificar se já existe um registro com o mesmo idMercadoria
+            const sqlVerificacao = 'SELECT * FROM tec_Pisdeb WHERE idMercadoria = ?';
+            db.query(sqlVerificacao, [regra.idMercadoria], (err, result) => {
+                if (err) {
+                    console.error('Erro ao verificar o idMercadoria na tabela tec_Pisdeb:', err);
+                    return;
+                }
+
+                if (result.length === 0) {
+                    // Inserção dos dados no banco de dados
+                    const sqlInsercao = 'INSERT INTO tec_Pisdeb (dataInicio, idMercadoria, ncm, mercadoria, unidade, naturezaOperacao, mercadoRem, regiaoRem, regimeApuracaoRem, regimeTributarioRem, ramoAtividadeRem, segmentoRem, mercadoDest, regiaoDest, regimeApuracaoDest, regimeTributarioDest, ramoAtividadeDest, segmentoDest, pisDebito, cofinsDebito, cst) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+                    const valuesInsercao = [
+                        regra.dataInicio,
+                        regra.idMercadoria,
+                        regra.ncm,
+                        regra.mercadoria,
+                        regra.unidade,
+                        regra.naturezaOperacao,
+                        regra.mercadoRem,
+                        regra.regiaoRem,
+                        regra.regimeApuracaoRem,
+                        regra.regimeTributarioRem,
+                        regra.ramoAtividadeRem,
+                        regra.segmentoRem,
+                        regra.mercadoDest,
+                        regra.regiaoDest,
+                        regra.regimeApuracaoDest,
+                        regra.regimeTributarioDest,
+                        regra.ramoAtividadeDest,
+                        regra.segmentoDest,
+                        regra.pisDebito.replace(',', '.'),
+                        regra.cofinsDebito.replace(',', '.'),
+                        regra.cst.length > 0 ? regra.cst[0] : null // Armazena apenas o primeiro valor do array cst
+                    ];
+
+                    db.query(sqlInsercao, valuesInsercao, (err, result) => {
+                        if (err) {
+                            console.error('Erro ao inserir dados na tabela tec_Pisdeb:', err);
+                            return;
+                        }
+                        console.log('Dados inseridos na tabela tec_Pisdeb com sucesso. ID:', result.insertId);
+                    });
+                } else {
+                    console.log('Registro com idMercadoria', regra.idMercadoria, 'já existe. Nenhuma ação foi realizada.');
+                }
+            });
+        } else {
+            console.log('Nenhuma regra encontrada para o NCM:', ncm);
+        }
+    } catch (error) {
+        throw error; // Lança o erro para ser capturado pelo try/catch do loop
     }
 }
-
-// Descomente a linha abaixo para executar o script diretamente.
-// apist();
-
-module.exports = { apist };
