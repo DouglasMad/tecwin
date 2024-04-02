@@ -79,4 +79,8 @@ function ajustaCstIpi() {
 }
 
 // Modifica a chamada original para ajustar os valores decimais primeiro
-ajustaFormatoDecimal();
+// ajustaFormatoDecimal();
+
+module.exports = {
+    ajustaFormatoDecimal
+}

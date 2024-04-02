@@ -27,7 +27,7 @@ async function processaNCMs() {
                 SELECT DISTINCT 
                     st_ncm.ufDestinatario, 
                     tec_stcst.cst, 
-                    st_ncm.aliquotadestino, 
+                    st_ncm.aliquotaDestino, 
                     st_ncm.aliquotaInterestadualMI,
                     tec_produto.ncm,
                     tec_produto.ipient,
@@ -62,7 +62,7 @@ async function processaNCMs() {
               
                 const insertQuery = `
                     INSERT INTO unica (ufDestinatario, cst, cstipi, unidade, ipient, ipi, ncm, aliquotaDestino, aliquotaInterestadualMI, pisDebito,cofinsDebito,cstpis,CodigoProduto, NomeProduto,aliquotaFCP)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE
                     ufDestinatario = VALUES(ufDestinatario),
                     cst = VALUES(cst),

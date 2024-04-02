@@ -55,7 +55,7 @@ function updateAjustarAliquotaBasedOnUfDestinatario() {
 }
 
 // Chama a função para realizar a atualização
-updateAjustarAliquotaBasedOnUfDestinatario();
+// updateAjustarAliquotaBasedOnUfDestinatario();
 
 module.exports = {
     updateAjustarAliquotaBasedOnUfDestinatario

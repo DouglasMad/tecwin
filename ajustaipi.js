@@ -74,11 +74,11 @@ function updateIpiEntBasedOnCstIpi() {
             });
         });
 
-        connection.release();
+        connection.end();
     });
 }
 
-updateIpiEntBasedOnCstIpi();
+// updateIpiEntBasedOnCstIpi();
 
 module.exports = {
     updateIpiEntBasedOnCstIpi

@@ -162,7 +162,7 @@ async function main() {
     }
 }
 
- main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
+//  main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
 
 
 

@@ -45,4 +45,8 @@ async function updateCSTForPrefix(prefix, originalCST, newCST) {
 }
 
 // Executa a função de atualização
-updateCST();
+// updateCST();
+
+module.exports = {
+    updateCST
+}

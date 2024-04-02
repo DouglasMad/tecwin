@@ -144,3 +144,8 @@ exportarDadosParaTXTSync((error, successMessage) => {
         console.log("Executando gerador de txt", successMessage);
     }
 });
+
+
+module.exports = {
+    exportarDadosParaTXTSync
+}

@@ -12,7 +12,9 @@ const fs = require('fs');
 const { processaNCMs } = require('./atualiza');
 const { atualizaNcmFinal } = require('./atualizancm');
 const { atualizarDadosST } = require('./dadosst');
-const { ajustaCstIpi } = require('./ajustacst');
+const { ajustaFormatoDecimal } = require('./ajustacst');
+const { updateAliq } = require('./ajustaAliq');
+const { updateCST } = require('./updatecst');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -37,7 +39,6 @@ const getConnectionFromPool = () => {
   });
 };
 
-// Função para atualizar o status no arquivo HTML
 async function atualizarStatusHTML(apiId, novoStatus) {
   const filePath = 'C:/tecwin/sistematec/Tecwin/index.html';
 
@@ -67,7 +68,6 @@ async function atualizarStatusHTML(apiId, novoStatus) {
   });
 }
 
-// Função para atualizar o console no arquivo HTML
 async function atualizarConsoleHTML(apiId, novoStatus) {
   const filePath = 'C:/tecwin/sistematec/Tecwin/index.html';
 
@@ -98,7 +98,6 @@ async function atualizarConsoleHTML(apiId, novoStatus) {
 }
 
 async function reiniciarAplicacao() {
-  // Configurar status inicial no HTML
   await atualizarStatusHTML('primeira', 'Aguardando execução');
   await atualizarStatusHTML('segunda', 'Aguardando execução');
   await atualizarStatusHTML('terceira', 'Aguardando execução');
@@ -107,62 +106,45 @@ async function reiniciarAplicacao() {
 
 async function execConect() {
   try {
-    const connection = await getConnectionFromPool(); // Obtemos a conexão do pool
+    const connection = await getConnectionFromPool();
+    const tabelasParaReinicar = ['dadosncm', 'dadosst', 'st_ncm', 'tec_ipi', 'tec_pisdeb','tec_produto', 'tec_stcst', 'unica'];
 
-    const tabelasParaReinicar = ['dadosncm', 'dadosst', 'st_ncm', 'tec_ipi', 'tec_pisdeb','tec_produto', 'tec_stcst', 'unica']
-
-
-    // Reinicia os bancos de dados st, tec_produto
     await reiniciarBancoAsync(connection);
     await reiniciarst(connection);
     await reiniciarTabelas(connection, tabelasParaReinicar);
     await reiniciareStatus(connection);
 
-    // Reinicia os status html da aplicação
     await reiniciarAplicacao();
 
-    // Verificar e executar a primeira API
     await verificarEExecutarPrimeiraAPI(connection);
-
-    // Verificar e executar a segunda API
     await verificarEExecutarSegundaAPI(connection);
-
-    // Verificar e executar a terceira API
     await verificarEExecutarTerceiraAPI(connection);
-
-
-
-    // Reinicia os status html da aplicação
-    // await reiniciarAplicacao();
   } catch (error) {
     console.error(error);
   }
 }
-// Ordem de execução
-//importNcm, importSt, updatIpiEntBasedOnCstIpi
-//apiSt, apiPis, apiPisDeb, atualizardadosst
-//ajustaipi, ajustaSt, atualizaNcm, atualiza, ajustaCst
-//exportação
+
 async function verificarEExecutarPrimeiraAPI(connection) {
   const statusImportNCM = await obterStatus(connection, 'Primeira API');
   if (statusImportNCM !== 'concluido') {
     await atualizarStatusHTML('primeira', 'Em andamento');
     await atualizarStatus(connection, 'Primeira API', 'em_andamento');
     await atualizarConsoleHTML('terceira', 'Aguardando terminar execução');
-    await lerArquivo().then(() => {
+
+    try {
+      await lerArquivo();
       console.log("ImportNcm concluido");
-    }).catch(err => {
-      console.error("Erro durante a execução: ImportNcm");
-    });
-    updateIpiEntBasedOnCstIpi()
-    await importst().then(() => {
-      console.log("ImportCst concluido.");
-    }).catch(err => {
-      console.error("Erro durante a execução: ImportCst");
-    });
+      await importst();
+      console.log("ImportSt concluido.");
+      await updateIpiEntBasedOnCstIpi();
+      console.log("UpdateIpiEntBasedOnCstIpi concluido.");
+    } catch (err) {
+      console.error("Erro durante a execução: ", err);
+    }
+
+    await atualizarStatus(connection, 'Primeira API', 'concluido');
+    await atualizarStatusHTML('primeira', 'Concluido');
   }
-  await atualizarStatus(connection, 'Primeira API', 'concluido');
-  await atualizarStatusHTML('primeira', 'Concluido');
 }
 
 async function verificarEExecutarSegundaAPI(connection) {
@@ -170,22 +152,29 @@ async function verificarEExecutarSegundaAPI(connection) {
   if (statusApiSt !== 'concluido') {
     await atualizarStatusHTML('segunda', 'Em andamento');
     await atualizarStatus(connection, 'Segunda API', 'em_andamento');
-    await apist().then(() => {
-      console.log("Processamento concluído. apiSt");
-    }).catch(err => {
-      console.error("Erro durante a execução: apiSt");
-    });
-    await main().then(() => {
-      console.log("Processamento concluído. apiPis");
-    }).catch(err => {
-      console.error("Erro durante a execução: apiPis");
-    });
-    updateAjustarAliquotaBasedOnUfDestinatario()
-    atualizarDadosST();
-    await processarTodosNCMs()
+
+    try {
+      await apist();
+      console.log("apiSt concluido.");
+      await main();
+      console.log("main (API Pis) concluido.");
+      await processarTodosNCMs();
+      console.log("processarTodosNCMs concluido.");
+      await atualizaNcmFinal();
+      console.log("atualizaNcmFinal concluido.");
+      await atualizarDadosST();
+      console.log("atualizarDadosST concluido.");
+      await updateAjustarAliquotaBasedOnUfDestinatario();
+      console.log("updateAjustarAliquotaBasedOnUfDestinatario concluido.");
+      await updateAliq();
+      console.log("updateAliq concluido.");
+    } catch (err) {
+      console.error("Erro durante a execução: ", err);
+    }
+
+    await atualizarStatus(connection, 'Segunda API', 'concluido');
+    await atualizarStatusHTML('segunda', 'Concluido');
   }
-  await atualizarStatus(connection, 'Segunda API', 'concluido');
-  await atualizarStatusHTML('segunda', 'Concluido');
 }
 
 async function verificarEExecutarTerceiraAPI(connection) {
@@ -193,26 +182,39 @@ async function verificarEExecutarTerceiraAPI(connection) {
   if (statusApiPis !== 'concluido') {
     await atualizarStatusHTML('terceira', 'Em andamento');
     await atualizarStatus(connection, 'Terceira API', 'em_andamento');
-    processaNCMs();
-    atualizaNcmFinal();
-    ajustaCstIpi()
 
-
-  }
-  await atualizarStatus(connection, 'Terceira API', 'concluido');
-  await atualizarStatusHTML('terceira', 'Concluido');
-  await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
-  await exportarDadosParaTXTSync((error, successMessage) => {
-    if (error) {
-        console.error('Erro ao exportar dados para o arquivo TXT:', error);
-    } else {
-        console.log("Executando gerador de txt", successMessage);
+    try {
+      await processaNCMs();
+      console.log("processaNCMs concluido.");
+      await updateCST();
+      console.log("updateCST concluido.");
+      await ajustaFormatoDecimal();
+      console.log("ajustaFormatoDecimal concluido.");
+    } catch (err) {
+      console.error("Erro durante a execução: ", err);
     }
-});
+
+    await atualizarStatus(connection, 'Terceira API', 'concluido');
+    await atualizarStatusHTML('terceira', 'Concluido');
+    await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
+
+    try {
+      await exportarDadosParaTXTSync((error, successMessage) => {
+        if (error) {
+            console.error('Erro ao exportar dados para o arquivo TXT:', error);
+        } else {
+            console.log("Executando gerador de txt", successMessage);
+        }
+    });
+      console.log("Dados exportados para TXT com sucesso.");
+    } catch (err) {
+      console.error("Erro ao exportar dados para o arquivo TXT:", err);
+    }
+  }
 }
 
 module.exports = {
-  execConect: execConect,
+  execConect,
   atualizarConsoleHTML,
   atualizarStatusHTML,
   reiniciarAplicacao,
