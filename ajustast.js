@@ -36,7 +36,9 @@ function updateAjustarAliquotaBasedOnUfDestinatario() {
                 // Verifica se ufDestinatario é 'RJ'
                 if (record.ufDestinatario === 'RJ') {
                     // Atualiza ajustarAliquota com aliquotaEfetiva
-                    const updateQuery = 'UPDATE st_ncm SET aliquotainterestadualMI = ? WHERE id = ?';
+                    const updateQuery = "UPDATE st_ncm SET aliquotainterestadualMI = ? WHERE id = ?";
+                    const updateQuery2 = "UPDATE st_ncm SET aliquotaDestino = aliquotaInterna ";
+                    
                     connection.query(updateQuery, [record.aliquotaEfetiva, record.id], (updateError, updateResults) => {
                         if (updateError) {
                             console.error('Erro ao atualizar registro:', updateError);
@@ -53,7 +55,7 @@ function updateAjustarAliquotaBasedOnUfDestinatario() {
 }
 
 // Chama a função para realizar a atualização
-// updateAjustarAliquotaBasedOnUfDestinatario();
+updateAjustarAliquotaBasedOnUfDestinatario();
 
 module.exports = {
     updateAjustarAliquotaBasedOnUfDestinatario

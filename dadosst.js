@@ -25,11 +25,11 @@ async function atualizarDadosST() {
             const ncm = row.ncm;
             // Executa a consulta e insere os resultados na tabela dadosst
             const insertQuery = `
-                INSERT INTO dadosst (ufDestinatario, cst, aliquotaEfetiva, aliquotaInterestadualMI, codigo, nmproduto)
+                INSERT INTO dadosst (ufDestinatario, cst, aliquotaDestino, aliquotaInterestadualMI, codigo, nmproduto)
                 SELECT DISTINCT 
                     st_ncm.ufDestinatario, 
                     tec_stcst.cst, 
-                    st_ncm.aliquotaEfetiva, 
+                    st_ncm.aliquotaDestino, 
                     st_ncm.aliquotaInterestadualMI,
                     tec_produto.codigo, 
                     tec_produto.nmproduto
@@ -54,7 +54,7 @@ async function atualizarDadosST() {
 }
 
 // Executa a função de atualização
-// atualizarDadosST();
+atualizarDadosST();
 
 module.exports = {
     atualizarDadosST

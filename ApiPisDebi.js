@@ -42,8 +42,7 @@ async function processarTodosNCMs() {
                 try {
                     await processarNCM(connection, results[i].ncm);
                 } catch (error) {
-                    console.error(`Erro ao processar o NCM: ${results[i].ncm}`);
-                    // console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error);
+                    console.error(`Erro ao processar o NCM: ${results[i].ncm}`, error);
                     // Continua para o próximo NCM mesmo que encontre um erro
                 }
             }
@@ -54,7 +53,7 @@ async function processarTodosNCMs() {
         console.error("Erro durante a execução:", error);
     } finally {
         if (connection) {
-            console.log('terminado')
+            console.log('Processamento terminado')
             connection.release(); // Liberamos a conexão de volta para o pool
         }
     }
@@ -70,11 +69,13 @@ async function processarNCM(connection, ncm) {
         const response = await axios.get(url);
         const data = response.data;
 
-        const resultadoFiltrado = data.pis.filter(regra => regra.nomeRegra === "Alíquota Básica - Não Cumulativo vendendo para não cumulativo");
+        let resultadoFiltrado = data.pis.filter(regra => regra.nomeRegra === "Alíquota Básica - Não Cumulativo vendendo para não cumulativo");
+        if (resultadoFiltrado.length === 0) {
+            resultadoFiltrado = data.pis.filter(regra => regra.nomeRegra === "Monofásico - Autopeças - Importador de autopeças vendendo para fabricantes de veículos");
+        }
 
         if (resultadoFiltrado.length > 0) {
             const regra = resultadoFiltrado[0];
-            // Verificar se já existe um registro com o mesmo idMercadoria
             const sqlVerificacao = 'SELECT * FROM tec_Pisdeb WHERE idMercadoria = ?';
             pool.query(sqlVerificacao, [regra.idMercadoria], (err, result) => {
                 if (err) {
@@ -83,7 +84,6 @@ async function processarNCM(connection, ncm) {
                 }
 
                 if (result.length === 0) {
-                    // Inserção dos dados no banco de dados
                     const sqlInsercao = 'INSERT INTO tec_Pisdeb (dataInicio, idMercadoria, ncm, mercadoria, unidade, naturezaOperacao, mercadoRem, regiaoRem, regimeApuracaoRem, regimeTributarioRem, ramoAtividadeRem, segmentoRem, mercadoDest, regiaoDest, regimeApuracaoDest, regimeTributarioDest, ramoAtividadeDest, segmentoDest, pisDebito, cofinsDebito, cst) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
                     const valuesInsercao = [
                         regra.dataInicio,
@@ -107,29 +107,29 @@ async function processarNCM(connection, ncm) {
                         regra.pisDebito.replace(',', '.'),
                         regra.cofinsDebito.replace(',', '.'),
                         regra.cst.length > 0 ? regra.cst[0] : null // Armazena apenas o primeiro valor do array cst
-                    ];
+                        ];
 
-                    pool.query(sqlInsercao, valuesInsercao, (err, result) => {
-                        if (err) {
-                            console.error('Erro ao inserir dados na tabela tec_Pisdeb:', err);
-                            return;
-                        }
-                        console.log('Dados inseridos na tabela tec_Pisdeb com sucesso. ID:', result.insertId);
-                    });
-                } else {
-                    console.log('Registro com idMercadoria', regra.idMercadoria, 'já existe. Nenhuma ação foi realizada.');
-                }
-            });
-        } else {
-            console.log('Nenhuma regra encontrada para o NCM:', ncm);
+                        pool.query(sqlInsercao, valuesInsercao, (err, result) => {
+                            if (err) {
+                                console.error('Erro ao inserir dados na tabela tec_Pisdeb:', err);
+                                return;
+                            }
+                            console.log('Dados inseridos na tabela tec_Pisdeb com sucesso. ID:', result.insertId);
+                        });
+                    } else {
+                        console.log('Registro com idMercadoria', regra.idMercadoria, 'já existe. Nenhuma ação foi realizada.');
+                    }
+                });
+            } else {
+                console.log('Nenhuma regra encontrada para o NCM:', ncm);
+            }
+        } catch (error) {
+            throw error; // Lança o erro para ser capturado pelo try/catch do loop
         }
-    } catch (error) {
-        throw error; // Lança o erro para ser capturado pelo try/catch do loop
-    }
 }
 
 // //Executar manualmente
-// processarTodosNCMs()
+ processarTodosNCMs()
 
 // Exporta a função processarTodosNCMs() para uso em outros arquivos
 module.exports = {

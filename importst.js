@@ -55,7 +55,7 @@ const importst = async () => {
 
         console.log('Iniciando leitura do arquivo...');
 
-        const data = await fs.readFile('C:/bkp/tecwinst.txt', 'utf8');
+        const data = await fs.readFile('C:/tecwin/sistemate/txtbase', 'utf8');
         const linhas = data.split('\n');
 
         console.log(`Total de ${linhas.length} linhas encontradas no arquivo.`);
@@ -81,7 +81,7 @@ const importst = async () => {
     }
 };
 
-//  importst(); // Adicionado para executar a função diretamente
+ importst(); // Adicionado para executar a função diretamente
 
 module.exports = {
     importst

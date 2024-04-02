@@ -53732,3 +53732,66 @@ Linha 188401: [Erro] Código Tributação IPI(Saída) '' inválido
 Linha 201621: [Erro] A classificação atingiu o limite permitido pela máscara.
 
  22/03/2024 11:29- Fim da importação
+
+
+26/03/2024 08:30:42
+Estação:SRVHOM01
+Tipo:Produtos
+Arquivo:C:\Users\Administrador.PLASSER\Documents\exportartecwin\teste\ImportandoTemp\intTecwin.txt
+Erro:
+ 26/03/2024 08:25- Inicio da importação do arquivo: C:\Users\Administrador.PLASSER\Documents\exportartecwin\teste\ImportandoTemp\intTecwin.txt
+
+Linha 12392: [Erro] A classificação atingiu o limite permitido pela máscara.
+Linha 50682: [Erro] A classificação atingiu o limite permitido pela máscara.
+Linha 58597: [Erro] A classificação atingiu o limite permitido pela máscara.
+
+ 26/03/2024 08:30- Fim da importação
+
+
+27/03/2024 09:31:43
+Estação:SRVHOM01
+Tipo:Produtos
+Arquivo:C:\Users\Administrador.PLASSER\Documents\exportartecwin\teste\ImportandoTemp\intTecwin.txt
+Erro:
+ 27/03/2024 09:25- Inicio da importação do arquivo: C:\Users\Administrador.PLASSER\Documents\exportartecwin\teste\ImportandoTemp\intTecwin.txt
+
+Linha 12392: [Erro] A classificação atingiu o limite permitido pela máscara.
+Linha 50682: [Erro] A classificação atingiu o limite permitido pela máscara.
+Linha 58597: [Erro] A classificação atingiu o limite permitido pela máscara.
+
+ 27/03/2024 09:31- Fim da importação
+
+
+28/03/2024 09:41:27
+Estação:SRVHOM01
+Tipo:Produtos
+Arquivo:C:\Users\Administrador.PLASSER\Documents\exportartecwin\teste\ImportandoTemp\intTecwin.txt
+Erro:
+ 28/03/2024 09:25- Inicio da importação do arquivo: C:\Users\Administrador.PLASSER\Documents\exportartecwin\teste\ImportandoTemp\intTecwin.txt
+
+Linha 21398: [Erro] A classificação atingiu o limite permitido pela máscara.
+Linha 40202: [Erro] Alíquota 'null' inválido
+Linha 93804: [Erro] A classificação atingiu o limite permitido pela máscara.
+Linha 104735: [Erro] A classificação atingiu o limite permitido pela máscara.
+Linha 112427: [Erro] A classificação atingiu o limite permitido pela máscara.
+Linha 122130: [Erro] Código Tributação IPI(Saída) '' inválido
+Linha 131123: [Erro] Unidade de medida 'M?' não cadastrada
+Linha 142793: [Erro] Código Tributação IPI(Saída) '' inválido
+Linha 157584: [Erro] Código Tributação IPI(Saída) '' inválido
+Linha 166680: [Erro] A classificação atingiu o limite permitido pela máscara.
+
+ 28/03/2024 09:41- Fim da importação
+
+
+01/04/2024 22:16:17
+Estação:SRVHOM01
+Tipo:Produtos
+Arquivo:C:\Users\Administrador.PLASSER\Documents\exportartecwin\teste\ImportandoTemp\intTecwin.txt
+Erro:
+ 01/04/2024 22:08- Inicio da importação do arquivo: C:\Users\Administrador.PLASSER\Documents\exportartecwin\teste\ImportandoTemp\intTecwin.txt
+
+Linha 21438: [Erro] A classificação atingiu o limite permitido pela máscara.
+Linha 40306: [Erro] Alíquota 'null' inválido
+Linha 94119: [Erro] A classificação atingiu o limite permitido pela máscara.
+
+ 01/04/2024 22:16- Fim da importação

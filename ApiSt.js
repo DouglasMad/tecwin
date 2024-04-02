@@ -54,10 +54,12 @@ async function saveDataToDatabase(connection, stData, ncm) {
             item.mvaAjustada,
             item.cest, // Supondo que cest não é um array
             ncm,
-            item.link
+            item.link,
+            item.aliquotaFCP,
+            item.aliquotaInterna 
         ];
 
-        const query = 'INSERT INTO st_ncm (ufRemetente, ufDestinatario, aliquotaDestino, aliquotaEfetiva, aliquotaInterestadual, aliquotaInterestadualMI, mvaOriginal, mvaAjustadaMI, mvaAjustada, cest, ncmid, link) VALUES ?';
+        const query = 'INSERT INTO st_ncm (ufRemetente, ufDestinatario, aliquotaDestino, aliquotaEfetiva, aliquotaInterestadual, aliquotaInterestadualMI, mvaOriginal, mvaAjustadaMI, mvaAjustada, cest, ncmid, link, aliquotaFCP,aliquotaInterna) VALUES ?';
         await new Promise((resolve, reject) => {
             connection.query(query, [[values]], (err, result) => {
                 if (err) {
@@ -71,6 +73,7 @@ async function saveDataToDatabase(connection, stData, ncm) {
         });
     }
 }
+
 
 // Função para recuperar todos os NCMs da tabela tec_produto, sem repetição
 async function getAllNcms(connection) {
@@ -130,7 +133,7 @@ async function apist() {
     }
 }
 
-//  apist();
+  apist();
 module.exports = {
     apist
 };
