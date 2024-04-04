@@ -42,8 +42,9 @@ function ajustaFormatoDecimal() {
 function ajustaCstIpi() {
     // Define as queries SQL para atualização
     const updateQueries = [
+        'UPDATE unica SET ipi = 6.5 WHERE cstipi = 50 AND ipi = 0',
         'UPDATE unica SET ipi = 0 WHERE cstipi = 51',
-        'UPDATE unica SET ipi = 6.5 WHERE cstipi = 50 AND ipi = 0'
+        
     ];
 
     // Obtém uma conexão do pool

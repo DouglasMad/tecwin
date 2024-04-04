@@ -53,7 +53,7 @@ async function gerarLog(arquivoTxt, tamanhoTxt, callback) {
 // Função para consultar informações na tabela unica
 async function consultarInformacoesUnica(connection) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT ufDestinatario, cst, cstipi, unidade, ipient, ipi, ncm, aliquotaDestino, aliquotaInterestadualMI, CodigoProduto, NomeProduto, pisDebito, cofinsDebito, cstpis, aliquotaFCP FROM unica ORDER BY CodigoProduto', (queryError, rows) => {
+        connection.query('SELECT ufDestinatario, cst, cstipi, unidade, ipient, ipi, ncm, aliquotaDestino, aliquotaInterestadualMI, CodigoProduto, NomeProduto, pisDebito, cofinsDebito, cstpis, aliquotaFCP, aliquotaEfetiva FROM unica ORDER BY CodigoProduto', (queryError, rows) => {
             if (queryError) {
                 reject(queryError);
             } else {
@@ -106,7 +106,7 @@ async function exportarDadosParaTXTSync(callback) {
             // Processar múltiplas linhas I para cada UF relacionada ao produto
             grupo.forEach(item => {
                 const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';
-                productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaDestino}|${item.aliquotaInterestadualMI}|${fcpItem}\n`;
+                productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|${fcpItem}| ${item.aliquotaEfetiva}\n`;
             });
 
             fileContent += productLines; // Adicionando as linhas processadas ao conteúdo do arquivo

@@ -90,7 +90,7 @@ async function processaNCMs() {
     }
 }
 
-processaNCMs();
+// processaNCMs();
 
 module.exports = {
     processaNCMs

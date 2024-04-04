@@ -15,6 +15,7 @@ const { atualizarDadosST } = require('./dadosst');
 const { ajustaFormatoDecimal } = require('./ajustacst');
 const { updateAliq } = require('./ajustaAliq');
 const { updateCST } = require('./updatecst');
+const { ajustaCSTparaZeroOuCem } = require('./ajustaCSTparaZeroOuCem')
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -190,6 +191,8 @@ async function verificarEExecutarTerceiraAPI(connection) {
       console.log("updateCST concluido.");
       await ajustaFormatoDecimal();
       console.log("ajustaFormatoDecimal concluido.");
+      await ajustaCSTparaZeroOuCem();
+      console.log("Ajuste CST para Zero ou Cem concluido")
     } catch (err) {
       console.error("Erro durante a execução: ", err);
     }
@@ -199,13 +202,13 @@ async function verificarEExecutarTerceiraAPI(connection) {
     await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
 
     try {
-      await exportarDadosParaTXTSync((error, successMessage) => {
-        if (error) {
-            console.error('Erro ao exportar dados para o arquivo TXT:', error);
-        } else {
-            console.log("Executando gerador de txt", successMessage);
-        }
-    });
+    //   await exportarDadosParaTXTSync((error, successMessage) => {
+    //     if (error) {
+    //         console.error('Erro ao exportar dados para o arquivo TXT:', error);
+    //     } else {
+    //         console.log("Executando gerador de txt", successMessage);
+    //     }
+    // });
       console.log("Dados exportados para TXT com sucesso.");
     } catch (err) {
       console.error("Erro ao exportar dados para o arquivo TXT:", err);

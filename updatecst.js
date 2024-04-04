@@ -28,6 +28,10 @@ async function updateCST() {
         await updateCSTForPrefix('02.', '110', '010');
         await updateCSTForPrefix('02.', '100', '000');
 
+        // Atualiza registros que começam com '04.
+        await updateCSTForPrefix('04.', '110', '010');
+        await updateCSTForPrefix('04.', '100', '000');
+
     } catch (error) {
         console.error('Erro ao atualizar CST dos produtos na tabela unica:', error);
     }
