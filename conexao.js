@@ -15,7 +15,8 @@ const { atualizarDadosST } = require('./dadosst');
 const { ajustaFormatoDecimal } = require('./ajustacst');
 const { updateAliq } = require('./ajustaAliq');
 const { updateCST } = require('./updatecst');
-const { ajustaCSTparaZeroOuCem } = require('./ajustaCSTparaZeroOuCem')
+const { ajustaCSTparaZeroOuCem } = require('./ajustaCSTparaZeroOuCem');
+const { atualizarUnica } = require('./updateUnica');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -120,6 +121,7 @@ async function execConect() {
     await verificarEExecutarPrimeiraAPI(connection);
     await verificarEExecutarSegundaAPI(connection);
     await verificarEExecutarTerceiraAPI(connection);
+    await verificarEExecutarGeradorDeTxt(connection);
   } catch (error) {
     console.error(error);
   }
@@ -191,6 +193,8 @@ async function verificarEExecutarTerceiraAPI(connection) {
       console.log("updateCST concluido.");
       await ajustaFormatoDecimal();
       console.log("ajustaFormatoDecimal concluido.");
+      await atualizarUnica();
+      console.log('Ajuste da aliquota realizado')
       await ajustaCSTparaZeroOuCem();
       console.log("Ajuste CST para Zero ou Cem concluido")
     } catch (err) {
@@ -202,18 +206,25 @@ async function verificarEExecutarTerceiraAPI(connection) {
     await atualizarConsoleHTML('terceira', 'Aplicação executada com sucesso');
 
     try {
-    //   await exportarDadosParaTXTSync((error, successMessage) => {
-    //     if (error) {
-    //         console.error('Erro ao exportar dados para o arquivo TXT:', error);
-    //     } else {
-    //         console.log("Executando gerador de txt", successMessage);
-    //     }
-    // });
+
       console.log("Dados exportados para TXT com sucesso.");
     } catch (err) {
       console.error("Erro ao exportar dados para o arquivo TXT:", err);
     }
   }
+}
+async function verificarEExecutarGeradorDeTxt(connection) {
+try {
+  await exportarDadosParaTXTSync((error, successMessage) => {
+    if (error) {
+        console.error('Erro ao exportar dados para o arquivo TXT:', error);
+    } else {
+        console.log("Executando gerador de txt", successMessage);
+    }
+});
+} catch (error) {
+ console.error('Erro:', error) 
+}
 }
 
 module.exports = {

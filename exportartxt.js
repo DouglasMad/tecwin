@@ -106,7 +106,7 @@ async function exportarDadosParaTXTSync(callback) {
             // Processar múltiplas linhas I para cada UF relacionada ao produto
             grupo.forEach(item => {
                 const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';
-                productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|${fcpItem}| ${item.aliquotaEfetiva}\n`;
+                productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;
             });
 
             fileContent += productLines; // Adicionando as linhas processadas ao conteúdo do arquivo

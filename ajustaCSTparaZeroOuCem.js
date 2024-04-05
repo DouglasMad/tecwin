@@ -45,12 +45,12 @@ function ajustaCSTparaZeroOuCem() {
             });
         });
 
-        connection.end();
+        connection.release();
     });
 }
 
 // Chama a função para realizar a atualização
-ajustaCSTparaZeroOuCem();
+// ajustaCSTparaZeroOuCem();
 
 module.exports = {
     ajustaCSTparaZeroOuCem
