@@ -106,8 +106,19 @@ async function exportarDadosParaTXTSync(callback) {
             // Processar múltiplas linhas I para cada UF relacionada ao produto
             grupo.forEach(item => {
                 const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';
-                productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;
-            });
+                if (item.ufDestinatario != 'RJ' && (item.cst === '100' || item.cst === '000')){
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|0|0\n`;
+                }
+                else if (item.ufDestinatario === 'RJ' && (item.cst === '100' || item.cst === '000')){
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaInterestadualMI}|0|${fcpItem}|${item.aliquotaEfetiva}\n`;
+                }
+                else if (item.cst === '110' || item.cst === '010'){
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                }
+                else{
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;
+                }
+                });
 
             fileContent += productLines; // Adicionando as linhas processadas ao conteúdo do arquivo
         });

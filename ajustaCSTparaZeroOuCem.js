@@ -34,7 +34,7 @@ function ajustaCSTparaZeroOuCem() {
 
             results.forEach(record => {
                     // SE FOR IGUAL A 100 ou 000 ATUALIZAR aliquotaDestino null
-                    const updateQuery = "UPDATE unica SET aliquotaDestino = ' ' WHERE cst = '000' OR cst = '100';"
+                    const updateQuery = "UPDATE unica SET aliquotaDestino = '0' WHERE cst = '000' OR cst = '100';"
                     connection.query(updateQuery, [record.aliquotaDestino, record.id], (updateError, updateResults) => {
                     if (updateError) {
                         console.error('Erro ao atualizar registro:', updateError);
@@ -50,7 +50,7 @@ function ajustaCSTparaZeroOuCem() {
 }
 
 // Chama a função para realizar a atualização
-// ajustaCSTparaZeroOuCem();
+ajustaCSTparaZeroOuCem();
 
 module.exports = {
     ajustaCSTparaZeroOuCem
