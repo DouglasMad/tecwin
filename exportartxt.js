@@ -53,7 +53,7 @@ async function gerarLog(arquivoTxt, tamanhoTxt, callback) {
 // Função para consultar informações na tabela unica
 async function consultarInformacoesUnica(connection) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT ufDestinatario, cst, cstipi, unidade, ipient, ipi, ncm, aliquotaDestino, aliquotaInterestadualMI, CodigoProduto, NomeProduto, pisDebito, cofinsDebito, cstpis, aliquotaFCP, aliquotaEfetiva FROM unica ORDER BY CodigoProduto', (queryError, rows) => {
+        connection.query('SELECT ufDestinatario, cst, cstipi, unidade, ipient, ipi, ncm, aliquotaDestino, aliquotaInterestadualMI, CodigoProduto, NomeProduto, pisDebito, cofinsDebito, cstpis, aliquotaFCP, aliquotaEfetiva, aliquotainterestadual FROM unica ORDER BY CodigoProduto', (queryError, rows) => {
             if (queryError) {
                 reject(queryError);
             } else {
@@ -100,17 +100,36 @@ async function exportarDadosParaTXTSync(callback) {
             if (primeiroItem.cofinsDebito != null) {
                 productLines += `S|1|C|S|${primeiroItem.cstpis}|${primeiroItem.cofinsDebito}\n`;
             }
+
             const cstIpiCleaned = primeiroItem.cstipi.toString().replace(/[\r\n]+/g, '');
-            productLines += `H|0|${primeiroItem.ipi}|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
+            
+            if(cstIpiCleaned == '01' || cstIpiCleaned == '51'){
+                productLines += `H|0|0|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
+            }else{
+                productLines += `H|0|${primeiroItem.ipi}|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
+            }
 
             // Processar múltiplas linhas I para cada UF relacionada ao produto
             grupo.forEach(item => {
                 const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';
-                if (item.ufDestinatario != 'RJ' && (item.cst === '100' || item.cst === '000')){
+                //Se prefixo for 07 usar aliquotainternaMI else aliquotaInterestadual
+                if (primeiroItem.CodigoProduto.startsWith('04.') && item.aliquotainterestadual != null){
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotainterestadual}|0|0\n`;
+                }
+                else if (item.ufDestinatario != 'RJ' && (item.cst === '100' || item.cst === '000')){
                     productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|0|0\n`;
                 }
                 else if (item.ufDestinatario === 'RJ' && (item.cst === '100' || item.cst === '000')){
-                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaInterestadualMI}|0|${fcpItem}|${item.aliquotaEfetiva}\n`;
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;
+                }
+                else if (item.ufDestinatario == 'RJ' && (item.cst == '110')){
+                    productLines += `I|S|1|${item.ufDestinatario}|100|0|20|2|22\n`;
+                }
+                else if (item.ufDestinatario == 'RJ' && (item.cst == '010')){
+                    productLines += `I|S|1|${item.ufDestinatario}|000|0|20|2|22\n`;
+                }
+                else if (item.ufDestinatario == 'RJ' && (item.cst == '110' || item.cst == '010')){
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|20|20|2|0\n`;
                 }
                 else if (item.cst === '110' || item.cst === '010'){
                     productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;

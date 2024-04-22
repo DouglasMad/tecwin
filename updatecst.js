@@ -23,14 +23,34 @@ async function updateCST() {
         // Atualiza registros que começam com '07.'
         await updateCSTForPrefix('07.', '010', '110');
         await updateCSTForPrefix('07.', '000', '100');
+        await updateCSTForPrefix('07.', '041', '100');
+        await updateCSTForPrefix('07.', '090', '100');
+        await updateCSTForPrefix('07.', '500', '100');  
 
         // Atualiza registros que começam com '02.'
         await updateCSTForPrefix('02.', '110', '010');
         await updateCSTForPrefix('02.', '100', '000');
 
-        // Atualiza registros que começam com '04.
+        // Atualiza registros que começam com '04.'
         await updateCSTForPrefix('04.', '110', '010');
         await updateCSTForPrefix('04.', '100', '000');
+        await updateCSTForPrefix('04.', '090', '000');
+        await updateCSTForPrefix('04.', '041', '000');
+
+        // Atualiza registros que começam com '08'
+        await updateCSTForPrefix('08.', '010', '110');
+        await updateCSTForPrefix('08.', '000', '100');
+        await updateCSTForPrefix('08.', '041', '100');
+        await updateCSTForPrefix('08.', '090', '100');
+        await updateCSTForPrefix('08.', '500', '100'); 
+
+        // Atualiza registros que começam com '11'
+        await updateCSTForPrefix('11.', '010', '110');
+        await updateCSTForPrefix('11.', '000', '100');
+        await updateCSTForPrefix('11.', '041', '100');
+        await updateCSTForPrefix('11.', '090', '100');
+        await updateCSTForPrefix('11.', '500', '100'); 
+
 
     } catch (error) {
         console.error('Erro ao atualizar CST dos produtos na tabela unica:', error);

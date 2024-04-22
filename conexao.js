@@ -17,6 +17,7 @@ const { updateAliq } = require('./ajustaAliq');
 const { updateCST } = require('./updatecst');
 const { ajustaCSTparaZeroOuCem } = require('./ajustaCSTparaZeroOuCem');
 const { atualizarUnica } = require('./updateUnica');
+const { Cstpr } = require('./cstpr');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -196,7 +197,9 @@ async function verificarEExecutarTerceiraAPI(connection) {
       await atualizarUnica();
       console.log('Ajuste da aliquota realizado')
       await ajustaCSTparaZeroOuCem();
-      console.log("Ajuste CST para Zero ou Cem concluido")
+      console.log("Ajuste CST para Zero ou Cem concluido");
+      await Cstpr();
+      console.log("cstPr executada com sucesso.")
     } catch (err) {
       console.error("Erro durante a execução: ", err);
     }

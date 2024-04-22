@@ -10,7 +10,7 @@ const pool = mysql.createPool({
     database: 'db_ncm',
     port: '3306',
     waitForConnections: true,
-    connectionLimit: 0,
+    connectionLimit: 10,
     queueLimit: 0
 });
 
@@ -28,14 +28,17 @@ const getConnectionFromPool = () => {
     });
 };
 
-//Função para gerar um log para o txt
+// Função para gerar um log para o txt
 async function gerarLog(arquivoTxt, tamanhoTxt, callback) {
     const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleString();
-    const directoryPath = 'C:/Users/Administrador.PLASSER/Documents/exportartecwin/teste/';
+    const formattedDate = currentDate.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const directoryPath = 'C:/tecwin/exportacoes';
 
-    const logContent = `Último arquivo ${arquivoTxt} gerado com sucesso. \nTamanho do arquivo: ${tamanhoTxt} kb.\n Data e hora: ${formattedDate}`;
+    if (!fs.existsSync(directoryPath)){
+        fs.mkdirSync(directoryPath);
+    }
 
+    const logContent = `Último arquivo ${arquivoTxt} gerado com sucesso. \nTamanho do arquivo: ${tamanhoTxt} kb.\nData e hora: ${formattedDate}`;
     const logFileName = path.join(directoryPath, "log.txt");
 
     fs.writeFile(logFileName, logContent, (writeError) => {
@@ -47,180 +50,91 @@ async function gerarLog(arquivoTxt, tamanhoTxt, callback) {
     });
 };
 
-// Função para consultar os produtos
-async function consultarProdutos(connection) {
+// Função para consultar informações na tabela unica
+async function consultarInformacoesUnica(connection) {
     return new Promise((resolve, reject) => {
-        connection.query('SELECT codigo, nmproduto, unidade, ncm, cstipi, ipient FROM tec_produto', (queryError, rows) => {
+        connection.query('SELECT ufDestinatario, cst, cstipi, unidade, ipient, ipi, ncm, aliquotaDestino, aliquotaInterestadualMI, CodigoProduto, NomeProduto, pisDebito, cofinsDebito, cstpis, aliquotaFCP, aliquotaEfetiva FROM unica ORDER BY CodigoProduto', (queryError, rows) => {
             if (queryError) {
                 reject(queryError);
-                return;
+            } else {
+                resolve(rows);
             }
-            resolve(rows);
         });
     });
 }
-
-//Função para consulta aliquota por NCM
-async function consultarAliquitaPorNcm(connection, ncm) {
-    return new Promise((resolve, reject) => {
-        connection.query('SELECT ipi FROM tec_ipi WHERE ncm_codigo = ? LIMIT 1', [ncm], (queryError, rows) => {
-            if (queryError) {
-                reject(queryError);
-                return;
-            }
-            resolve(rows);
-        });
-    });
-}
-
-// Função para consultar PIS/PASEP por NCM
-async function consultarPisPasepPorNcm(connection, ncm) {
-    return new Promise((resolve, reject) => {
-        connection.query('SELECT * FROM tec_pisdeb WHERE ncm = ? AND pisDebito IS NOT NULL', [ncm], (pisQueryError, pisRows) => {
-            if (pisQueryError) {
-                reject(pisQueryError);
-                return;
-            }
-            resolve(pisRows);
-        });
-    });
-}
-
-// Função para consultar COFINS por NCM
-async function consultarCofinsPorNcm(connection, ncm) {
-    return new Promise((resolve, reject) => {
-        connection.query('SELECT * FROM tec_pisdeb WHERE ncm = ? AND cofinsDebito IS NOT NULL', [ncm], (cofinsQueryError, cofinsRows) => {
-            if (cofinsQueryError) {
-                reject(cofinsQueryError);
-                return;
-            }
-            resolve(cofinsRows);
-        });
-    });
-}
-
-// Função para consultar ICMS/ST por NCM
-async function consultarIcmsStPorNcm(connection, codigoProduto) {
-    return new Promise((resolve, reject) => {
-        connection.query('SELECT DISTINCT u.ufDestinatario, u.cst, u.aliquotaDestino, u.aliquotaFCP, u.aliquotaInterestadualMI FROM unica u JOIN tec_produto p ON p.codigo = u.codigoProduto WHERE p.codigo = ?', [codigoProduto], (icmsQueryError, icmsRows) => {
-            if (icmsQueryError) {
-                reject(icmsQueryError);
-                return;
-            }
-            resolve(icmsRows);
-        });
-    });
-}
-async function verificarFCP(connection, codigoProduto) { 
-    return new Promise((resolve, reject) => {
-        connection.query('SELECT DISTINCT u.aliquotaFCP FROM unica u JOIN tec_produto p ON p.codigo = u.codigoProduto WHERE p.codigo = ?', [codigoProduto], (icmsQueryError, icmsRows) => {
-            if (icmsQueryError) {
-                reject(icmsQueryError);
-                return;
-            }
-            resolve(icmsRows);
-        });
-    });
-};
 
 // Função principal para exportar dados para o arquivo TXT
 async function exportarDadosParaTXTSync(callback) {
     const currentDate = new Date();
-    const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
-    const directoryPath = 'C:/Users/Administrador.PLASSER/Documents/exportartecwin/teste/';
-    const fileName = path.join(directoryPath, `intTecwin.txt`);
+    const formattedDate = currentDate.toISOString().slice(0, 10);
+    const directoryPath = 'C:/tecwin/exportacoes';
+
+    if (!fs.existsSync(directoryPath)) {
+        fs.mkdirSync(directoryPath);
+    }
+
+    const fileName = path.join(directoryPath, `dadosUnica_${formattedDate}.txt`);
     let fileContent = '';
 
     let connection;
 
     try {
         connection = await getConnectionFromPool();
+        const dadosUnica = await consultarInformacoesUnica(connection);
 
-        const produtos = await consultarProdutos(connection);
+        // Agrupar dados por CodigoProduto para processar linhas I associadas
+        const produtosAgrupados = dadosUnica.reduce((acc, item) => {
+            (acc[item.CodigoProduto] = acc[item.CodigoProduto] || []).push(item);
+            return acc;
+        }, {});
 
-        for (const produto of produtos) {
-            const pisPasep = await consultarPisPasepPorNcm(connection, produto.ncm);
-            const cofins = await consultarCofinsPorNcm(connection, produto.ncm);
-            const icmsSt = await consultarIcmsStPorNcm(connection, produto.codigo);
-            const aliquota = await consultarAliquitaPorNcm(connection, produto.ncm);
-            const verificarFcp = await verificarFCP(connection, produto.codigo);
+        Object.values(produtosAgrupados).forEach(grupo => {
+            const primeiroItem = grupo[0];
+            let productLines = `P|${primeiroItem.CodigoProduto}|${primeiroItem.NomeProduto}|${primeiroItem.unidade}\n`;
 
-            // Verifica se há dados correspondentes nas consultas de PIS/PASEP, COFINS e ICMS/ST
-            if (icmsSt.length > 0 && aliquota.length > 0 && (pisPasep.length > 0 || cofins.length > 0)) {
-                // Adiciona as linhas P e H apenas se houver dados correspondentes nas consultas
-                fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
-
-                pisPasep.forEach(row => {
-                    const { cst, pisDebito } = row;
-                    fileContent += `S|1|P|S|${cst ? cst : ''}|${pisDebito}\n`;
-                });
-
-                cofins.forEach(row => {
-                    const { cst, cofinsDebito } = row;
-                    fileContent += `S|1|C|S|${cst ? cst : ''}|${cofinsDebito}\n`;
-                });
-
-                const cstIpiCleaned = produto.cstipi.toString().replace(/[\r\n]+/g, '');
-                const { ipi } = aliquota[0];
-                fileContent += `H|0|${ipi}|${cstIpiCleaned}|${produto.ipient}\n`;
-
-                icmsSt.forEach(row => {
-                    const { ufDestinatario, cst, aliquotaDestino, aliquotaInterestadualMI } = row;
-                    // Verifica se o estado é RJ e a aliquotaInterestadualMI é nula
-                    const aliquotaFinal = produto.uf === 'RJ' && aliquotaInterestadualMI < 0 ? aliquotaDestino : aliquotaInterestadualMI;
-                    fileContent += `I|S|1|${ufDestinatario}|${cst}|${aliquotaDestino}|${aliquotaFinal}|\n`;
-                });
-            } else if (icmsSt.length > 0 && aliquota.length > 0) {
-                // Adiciona as linhas P e H apenas se houver dados correspondentes nas consultas
-                fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
-
-                const cstIpiCleaned = produto.cstipi.toString().replace(/[\r\n]+/g, '');
-                const { ipi } = aliquota[0];
-                fileContent += `H|0|${ipi}|${cstIpiCleaned}|${produto.ipient}\n`;
-
-                icmsSt.forEach(row => {
-                    const { ufDestinatario, cst, aliquotaDestino, aliquotaInterestadualMI } = row;
-                    // Verifica se o estado é RJ e a aliquotaInterestadualMI é nula
-                    const aliquotaFinal = produto.uf === 'RJ' && aliquotaInterestadualMI === null ? aliquotaDestino : aliquotaInterestadualMI;
-                    fileContent += `I|S|1|${ufDestinatario}|${cst}|${aliquotaDestino}|${aliquotaFinal}|\n`;
-                });
-            }else if(verificarFcp.length > 0) {
-                                // Adiciona as linhas P e H apenas se houver dados correspondentes nas consultas
-                fileContent += `P|${produto.codigo}|${produto.nmproduto}|${produto.unidade}\n`;
-
-                pisPasep.forEach(row => {
-                    const { cst, pisDebito } = row;
-                    fileContent += `S|1|P|S|${cst ? cst : ''}|${pisDebito}\n`;
-                });
-
-                cofins.forEach(row => {
-                    const { cst, cofinsDebito } = row;
-                    fileContent += `S|1|C|S|${cst ? cst : ''}|${cofinsDebito}\n`;
-                });
-                
-                
-                const cstIpiCleaned = produto.cstipi.toString().replace(/[\r\n]+/g, '');
-                const { ipi } = aliquota[0];
-                fileContent += `H|0|${ipi}|${cstIpiCleaned}|${produto.ipient}\n`
-                // const aliquotaFCP = verificarFCP(); 
-                icmsSt.forEach(row => {
-                    const { ufDestinatario, cst, aliquotaDestino , aliquotaInterestadualMI, aliquotaFCP } = row;
-                    const aliquotaFinal = produto.uf === 'RJ' && aliquotaInterestadualMI < 0 ? aliquotaDestino : aliquotaInterestadualMI;
-                    fileContent += `I|S|1|${ufDestinatario}|${cst}|${aliquotaDestino}|${aliquotaFinal}|${aliquotaFCP}\n`;
-                });
+            // Linhas S para PIS e COFINS, e linha H para IPI
+            if (primeiroItem.pisDebito != null) {
+                productLines += `S|1|P|S|${primeiroItem.cstpis}|${primeiroItem.pisDebito}\n`;
             }
-        }
 
-        console.log('Gerando txt');
+            if (primeiroItem.cofinsDebito != null) {
+                productLines += `S|1|C|S|${primeiroItem.cstpis}|${primeiroItem.cofinsDebito}\n`;
+            }
 
-        // GERA TXT NO ARQUIVO DO PROJETO
+            const cstIpiCleaned = primeiroItem.cstipi.toString().replace(/[\r\n]+/g, '');
+            if(cstIpiCleaned == '01' || cstIpiCleaned == '51' && primeiroItem.ipient != null){
+                productLines += `H|0|0|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
+            } else if(primeiroItem.ipient != null) {
+                productLines += `H|0|${primeiroItem.ipi}|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
+            }
+
+            // Processar múltiplas linhas I para cada UF relacionada ao produto
+            grupo.forEach(item => {
+                if (item.ufDestinatario === 'RJ' && (item.cst === '100'  || item.cst === '000') && (item.aliquotaInterestadualMI != null && item.aliquotaFCP != null && item.aliquotaInterestadual != null)) {
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|${item.aliquotaFCP}|${item.aliquotaEfetiva}\n`;
+                } else if (item.ufDestinatario === 'RJ' && (item.cst === '110' || item.cst === '010')  && (item.aliquotaInterestadualMI != null && item.aliquotaFCP != null && item.aliquotaInterestadual != null)) {
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|20|20|2|22\n`;
+                } else if (item.cst === '100' || item.cst === '000'  && (item.aliquotaInterestadualMI != null && item.aliquotaFCP != null && item.aliquotaInterestadual != null)){
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|0|0\n`;
+                } else if (primeiroItem.CodigoProduto.startsWith('07.')  && (item.aliquotaInterestadualMI != null && item.aliquotaFCP != null && item.aliquotaInterestadual != null)) {
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                } else if (primeiroItem.CodigoProduto.startsWith('04.')  && (item.aliquotaInterestadualMI != null && item.aliquotaFCP != null && item.aliquotaInterestadual != null)) {
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadual}|0|0\n`;
+                }else if( item.aliquotaInterestadualMI != null && item.aliquotaFCP != null && item.aliquotaInterestadual != null) {
+                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                }
+            });
+
+            fileContent += productLines;
+        });
+
         fs.writeFile(fileName, fileContent, (writeError) => {
             if (!writeError) {
-                gerarLog(fileName, fileContent.length, (logError, logSucessMessage) => {
+                gerarLog(fileName, fileContent.length / 1024, (logError, logSuccessMessage) => {
                     if (logError) {
-                        console.error('Erro ao gerar arquivo log', logError);
+                        console.error('Erro ao gerar arquivo de log', logError);
                     } else {
-                        console.log(logSucessMessage);
+                        console.log(logSuccessMessage);
                     }
                 });
                 callback(null, `Arquivo ${fileName} gerado com sucesso.`);
@@ -229,15 +143,16 @@ async function exportarDadosParaTXTSync(callback) {
             }
         });
     } catch (error) {
+        console.error('Erro durante a exportação dos dados:', error);
         callback(error);
     } finally {
         if (connection) {
-            connection.release(); // Liberamos a conexão de volta para o pool
+            connection.release();
         }
     }
 }
 
- exportarDadosParaTXTSync((error, successMessage) => {
+exportarDadosParaTXTSync((error, successMessage) => {
     if (error) {
         console.error('Erro ao exportar dados para o arquivo TXT:', error);
     } else {
@@ -247,4 +162,4 @@ async function exportarDadosParaTXTSync(callback) {
 
 module.exports = {
     exportarDadosParaTXTSync
-};
+}

@@ -13,6 +13,9 @@ const pool = mysql.createPool({
 });
 
 function ajustaCSTparaZeroOuCem() {
+    try {
+        
+
     pool.getConnection((err, connection) => {
         if (err) {
             console.error('Erro ao conectar ao banco de dados:', err);
@@ -40,17 +43,21 @@ function ajustaCSTparaZeroOuCem() {
                         console.error('Erro ao atualizar registro:', updateError);
                         return;
                     }
-                    console.log(`Registro ID: ${record.aliquotaDestino} atualizado com ajustarAliquota: ${record.aliquotaDestino}`);
+                    // console.log(`Registro ID: ${record.aliquotaDestino} atualizado com ajustarAliquota: ${record.aliquotaDestino}`);
                 });
             });
         });
 
         connection.release();
     });
+    console.log('ajusteCSTparaZeroOuCem concluido com sucessor')
+} catch (error) {
+        console.log('AjusteCSTParaZeroOuCem falhou execução')
+}
 }
 
 // Chama a função para realizar a atualização
-ajustaCSTparaZeroOuCem();
+// ajustaCSTparaZeroOuCem();
 
 module.exports = {
     ajustaCSTparaZeroOuCem
