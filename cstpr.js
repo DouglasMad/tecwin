@@ -16,7 +16,7 @@ function Cstpr() {
     let query = `
         UPDATE unica
         SET cst = 110
-        WHERE ufdestinatario = 'PR' AND
+        WHERE ufdestinatario = 'PR' OR ufdestinatario = 'MG' OR ufdestinatario = 'ES' AND
               ncm LIKE '7318%'
     `;
     pool.query(query, (error, results) => {
