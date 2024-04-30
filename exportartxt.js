@@ -109,6 +109,16 @@ async function exportarDadosParaTXTSync(callback) {
                 productLines += `H|0|${primeiroItem.ipi}|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
             }
 
+            grupo.forEach(item => {
+                const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';
+                //Se prefixo for 07 usar aliquotainternaMI else aliquotaInterestadual
+                if (primeiroItem.CodigoProduto.startsWith('04.') && item.ufDestinatario == "RJ"){
+                    productLines += `I|E|1|${item.ufDestinatario}|000|0|20|2|22\n`;
+                }
+                else if (primeiroItem.CodigoProduto.startsWith('07.') && item.ufDestinatario == 'RJ'){
+                    productLines += `I|E|1|${item.ufDestinatario}|100|0|20|2|22\n`;
+                }
+                });
             // Processar múltiplas linhas I para cada UF relacionada ao produto
             grupo.forEach(item => {
                 const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';

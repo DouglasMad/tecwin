@@ -11,15 +11,15 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
-function Cstpr() {
+function updateRobel() {
    
     let query = `
         UPDATE unica
-        SET cst = '010'
-        WHERE (ufdestinatario = 'PR' OR ufdestinatario = 'MG' OR ufdestinatario = 'ES') AND
-        ncm LIKE '7318%' AND
-        (NOT CodigoProduto LIKE '04.%')
+        SET cst = '100'
+        WHERE ncm LIKE '73181500' AND
+        CodigoProduto LIKE '11.%'
 `;
+
     pool.query(query, (error, results) => {
         if (error) {
             return console.error('Erro ao atualizar os dados:', error.message);
@@ -28,8 +28,8 @@ function Cstpr() {
     });
 }
 
-Cstpr();
+updateRobel();
 
 module.exports = {
-    Cstpr
+    updateRobel
 }
