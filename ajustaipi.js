@@ -78,7 +78,7 @@ function updateIpiEntBasedOnCstIpi() {
     });
 }
 
-// updateIpiEntBasedOnCstIpi();
+updateIpiEntBasedOnCstIpi();
 
 module.exports = {
     updateIpiEntBasedOnCstIpi

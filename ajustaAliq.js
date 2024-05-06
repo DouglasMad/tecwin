@@ -54,7 +54,7 @@ function updateAliq() {
 }
 
 // Chama a função para realizar a atualização
-// updateAliq();
+updateAliq();
 
 module.exports = {
     updateAliq
