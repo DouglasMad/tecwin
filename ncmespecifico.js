@@ -11,14 +11,17 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
-function Cstpr() {
+function CstPA() {
    
+    // 07. = 110 04. = 010
     let query = `
-        UPDATE unica
-        SET cst = '010'
-        WHERE (ufdestinatario = 'PR' OR ufdestinatario = 'MG' OR ufdestinatario = 'ES') AND
-        ncm LIKE '7318%' AND
-        (CodigoProduto LIKE '04.%')
+    UPDATE unica
+    SET cst = CASE 
+                WHEN CodigoProduto LIKE '07.%' THEN '110'
+                WHEN CodigoProduto LIKE '04.%' THEN '010'
+                ELSE cst
+              END
+    WHERE ufdestinatario = 'PA' AND ncm LIKE '73181500'
 `;
     pool.query(query, (error, results) => {
         if (error) {
@@ -28,8 +31,8 @@ function Cstpr() {
     });
 }
 
-Cstpr();
+CstPA();
 
 module.exports = {
-    Cstpr
+    CstPA
 }

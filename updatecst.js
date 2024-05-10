@@ -26,6 +26,8 @@ async function updateCST() {
         await updateCSTForPrefix('07.', '041', '100');
         await updateCSTForPrefix('07.', '090', '100');
         await updateCSTForPrefix('07.', '500', '100');  
+        await updateCSTForPrefix('07.', '210', '110');
+        await updateCSTForPrefix('07.', '200', '100');    
 
         // Atualiza registros que começam com '02.'
         await updateCSTForPrefix('02.', '110', '010');
@@ -36,6 +38,8 @@ async function updateCST() {
         await updateCSTForPrefix('04.', '100', '000');
         await updateCSTForPrefix('04.', '090', '000');
         await updateCSTForPrefix('04.', '041', '000');
+        await updateCSTForPrefix('04.', '210', '110');
+        await updateCSTForPrefix('04.', '200', '100');  
 
         // Atualiza registros que começam com '08'
         await updateCSTForPrefix('08.', '010', '110');
