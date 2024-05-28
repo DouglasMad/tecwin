@@ -55,7 +55,7 @@ async function atualizaNcmFinal() {
     });
 }
 
-atualizaNcmFinal();
+// atualizaNcmFinal();
 
 module.exports = {
   atualizaNcmFinal
