@@ -119,65 +119,96 @@ async function exportarDadosParaTXTSync(callback) {
                     productLines += `I|E|1|${item.ufDestinatario}|100|0|20|2|22\n`;
                 }
                 });
-            // Processar múltiplas linhas I para cada UF relacionada ao produto
-            grupo.forEach(item => {
-                const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';
-                //Se prefixo for 07 usar aliquotainternaMI else aliquotaInterestadual
-                if ((item.ufDestinatario == 'PR' ||  item.ufDestinatario == 'ES') && item.ncm == '73269090'){
-                    productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                                                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                }
-                else if (item.ufDestinatario == 'MA' && item.ncm == '84122900'){
-                    productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                                                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                }
-                else if ((item.ufDestinatario == 'MG' || item.ufDestinatario == 'PR') && item.ncm == '84123110'){
-                    productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
-                                                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                }
-                else if ((item.ufDestinatario == 'MG') && item.ncm == '84212990'){
-                    productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
-                }
-                else if(primeiroItem.CodigoProduto.startsWith('04.') && item.aliquotainterestadual != null){
-                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotainterestadual}|0|0\n`;
-                }
-                else if (item.ufDestinatario == 'PR' && item.ncm == '84254910'){
-                    productLines += `I|S|1|${item.ufDestinatario}|100|0|${item.aliquotaInterestadualMI}|0|0\n`;
-                                                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                }
-                else if ((item.ufDestinatario == 'PA' || item.ufDestinatario == 'PR') && item.ncm == '73181600'){
-                    productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                }
-                else if (item.ufDestinatario == 'MG' && item.ncm == '73181500'){
-                    productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                }
-                else if (item.ufDestinatario == 'SP' && item.ncm == '73181500'){
-                    productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                }
-                else if (item.ufDestinatario != 'RJ' && (item.cst === '100' || item.cst === '000')){
-                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|0|0\n`;
-                }
-                else if (item.ufDestinatario === 'RJ' && (item.cst === '100' || item.cst === '000')){
-                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;
-                }
-                else if (item.ufDestinatario == 'RJ' && (item.cst == '110')){
-                    productLines += `I|S|1|${item.ufDestinatario}|100|0|20|2|22\n`;
-                }
-                else if (item.ufDestinatario == 'RJ' && (item.cst == '010')){
-                    productLines += `I|S|1|${item.ufDestinatario}|000|0|20|2|22\n`;
-                }
-                else if (item.ufDestinatario == 'RJ' && (item.cst == '110' || item.cst == '010')){
-                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|20|20|2|0\n`;
-                }
-                else if (item.cst === '110' || item.cst === '010'){
-                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                }
-                else{
-                    productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;
-                }
+
+                let adicionouES = false;
+                let estadosAdicionados = new Set(); // Conjunto para rastrear os estados já adicionados
+                
+                // Processar múltiplas linhas I para cada UF relacionada ao produto
+                grupo.forEach(item => {
+                    const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';
+                    
+                    // Verificar se o estado já foi adicionado
+                    if (!estadosAdicionados.has(item.ufDestinatario)) {
+                        // Adicionar a linha apenas se o estado não estiver no conjunto
+                        if ((item.ufDestinatario == 'PR' || item.ufDestinatario == 'ES') && item.ncm == '73269090') {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if (item.ufDestinatario == 'MA' && item.ncm == '84122900') {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if ((item.ufDestinatario == 'MG' || item.ufDestinatario == 'PR') && item.ncm == '84123110') {
+                            productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if ((item.ufDestinatario == 'MG') && item.ncm == '84212990') {
+                            productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        }
+                        else if (item.ufDestinatario == 'ES' && item.ncm == '84636060') {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if ((item.ufDestinatario == 'MA') && item.ncm == '84212990') {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if (item.ncm == '84212990' && item.CodigoProduto == '07.990035' && !adicionouES) {
+                            productLines += `I|S|1|ES|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
+                            adicionouES = true; // Definir como true para evitar adicionar ES novamente
+                        }else if (primeiroItem.CodigoProduto.startsWith('04.') && item.aliquotainterestadual != null && !linhaAdicionada) {
+                            productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotainterestadual}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ufDestinatario == 'PR' && item.ncm == '84254910') {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if ((item.ufDestinatario == 'ES') && item.ncm == '73182200') {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if ((item.ufDestinatario == 'PA' || item.ufDestinatario == 'PR') && item.ncm == '73181600') {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ufDestinatario == 'MG' && item.ncm == '73181500') {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ufDestinatario == 'SP' && item.ncm == '73181500') {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ufDestinatario == 'ES' && item.ncm == '73181500') {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ufDestinatario != 'RJ' && (item.cst === '100' || item.cst === '000')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ufDestinatario === 'RJ' && (item.cst === '100' || item.cst === '000')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ufDestinatario == 'RJ' && (item.cst == '110')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|20|2|22\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ufDestinatario == 'RJ' && (item.cst == '010')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|000|0|20|2|22\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ufDestinatario == 'RJ' && (item.cst == '110' || item.cst == '010')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|20|20|2|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.cst === '110' || item.cst === '010') {
+                            productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else {
+                            productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        }
+                    }
+                
+                    // Resetar a variável para a próxima iteração
+                    linhaAdicionada = false;
                 });
 
-            fileContent += productLines; // Adicionando as linhas processadas ao conteúdo do arquivo
+                fileContent += productLines; // Adicionando as linhas processadas ao conteúdo do arquivo
+                
         });
 
         // Escrevendo no arquivo TXT
