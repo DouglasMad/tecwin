@@ -129,9 +129,23 @@ async function exportarDadosParaTXTSync(callback) {
                     
                     // Verificar se o estado já foi adicionado
                     if (!estadosAdicionados.has(item.ufDestinatario)) {
-                        // Adicionar a linha apenas se o estado não estiver no conjunto
-                        if ((item.ufDestinatario == 'PR' || item.ufDestinatario == 'ES') && item.ncm == '73269090') {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        // PARA ITENS 07(IMPORTADOS) O CORRETO é 100 ou 110
+                        if ((item.ufDestinatario == 'PR' || item.ufDestinatario == 'ES') && item.ncm == '73269090' && primeiroItem.CodigoProduto.startsWith('07.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        }
+                        //PARA ITENS 04(NACIONAIS) O CORRETO é 000 ou 010 
+                        else if((item.ufDestinatario == 'PR' || item.ufDestinatario == 'ES') && item.ncm == '73269090' && primeiroItem.CodigoProduto.startsWith('04.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|7|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if((item.ufDestinatario == 'ES') && item.ncm == '73209090' && primeiroItem.CodigoProduto.startsWith('11.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|0|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if((item.ufDestinatario == 'PR') && item.ncm == '84679100' && primeiroItem.CodigoProduto.startsWith('11.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
                         } else if (item.ufDestinatario == 'MA' && item.ncm == '84122900') {
@@ -142,20 +156,28 @@ async function exportarDadosParaTXTSync(callback) {
                             productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if ((item.ufDestinatario == 'MG') && item.ncm == '84212990') {
-                            productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
                         }
                         else if (item.ufDestinatario == 'ES' && item.ncm == '84636060') {
                             productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if ((item.ufDestinatario == 'MA') && item.ncm == '84212990') {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        } else if ((item.ufDestinatario == 'MA') && item.ncm == '84213100' && primeiroItem.CodigoProduto.startsWith('11.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if ((item.ufDestinatario == 'ES') && item.ncm == '84314929' && primeiroItem.CodigoProduto.startsWith('11.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if ((item.ufDestinatario == 'MA' || item.ufDestinatario == 'ES') && item.ncm == '84212990' && primeiroItem.CodigoProduto.startsWith('07.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if ((item.ufDestinatario == 'MG') && item.ncm == '84212990' && primeiroItem.CodigoProduto.startsWith('07.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
                         } else if (item.ncm == '84212990' && item.CodigoProduto == '07.990035' && !adicionouES) {
-                            productLines += `I|S|1|ES|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
+                            productLines += `I|S|1|ES|100|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             adicionouES = true; // Definir como true para evitar adicionar ES novamente
                         }else if (primeiroItem.CodigoProduto.startsWith('04.') && item.aliquotainterestadual != null && !linhaAdicionada) {
                             productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotainterestadual}|0|0\n`;
@@ -176,8 +198,8 @@ async function exportarDadosParaTXTSync(callback) {
                         } else if (item.ufDestinatario == 'SP' && item.ncm == '73181500') {
                             productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario == 'ES' && item.ncm == '73181500') {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        } else if (item.ufDestinatario == 'ES' && item.ncm == '73181500' && primeiroItem.CodigoProduto.startsWith('07.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (item.ufDestinatario != 'RJ' && (item.cst === '100' || item.cst === '000')) {
                             productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|0|0\n`;
