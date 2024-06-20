@@ -164,7 +164,7 @@ async function exportarDadosParaTXTSync(callback) {
                             productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if((item.ufDestinatario == 'RS' || item.ufDestinatario == 'MG' || item.ufDestinatario == 'SP') && item.ncm == '84839000' && primeiroItem.CodigoProduto.startsWith('04.')) {
+                        } else if((item.ufDestinatario == 'RS' || item.ufDestinatario == 'MG' || item.ufDestinatario == 'SP' || item.ufDestinatario == 'AC' || item.ufDestinatario == 'PR') && item.ncm == '84839000' && primeiroItem.CodigoProduto.startsWith('04.')) {
                             productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
@@ -210,7 +210,7 @@ async function exportarDadosParaTXTSync(callback) {
                             productLines += `I|S|1|${item.ufDestinatario}|100|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if ((item.ufDestinatario == 'PA' || item.ufDestinatario == 'BA') && item.ncm == '73182900'  && item.CodigoProduto.startsWith('04.')) {
+                        } else if ((item.ufDestinatario == 'PA' || item.ufDestinatario == 'BA') && item.ncm == '73182900'  && item.CodigoProduto.startsWith('04.') && item.CodigoProduto == '04.6742') {
                             productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (item.ncm == '73182900'  && item.CodigoProduto == '04.6742') {
