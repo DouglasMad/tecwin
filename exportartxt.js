@@ -136,12 +136,36 @@ async function exportarDadosParaTXTSync(callback) {
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
                         }
                         //PARA ITENS 04(NACIONAIS) O CORRETO é 000 ou 010 
-                        else if((item.ufDestinatario == 'PR' || item.ufDestinatario == 'ES') && item.ncm == '73269090' && primeiroItem.CodigoProduto.startsWith('04.')) {
+                        else if((item.ufDestinatario == 'PR' || item.ufDestinatario == 'ES' || item.ufDestinatario == 'AC') && item.ncm == '73269090' && primeiroItem.CodigoProduto.startsWith('04.')) {
                             productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|7|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if((item.ufDestinatario == 'MA' || item.ufDestinatario == 'SP' || item.ufDestinatario == 'PA' || item.ufDestinatario == 'RS') && item.ncm == '73269090' && primeiroItem.CodigoProduto.startsWith('04.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
                         } else if((item.ufDestinatario == 'ES') && item.ncm == '73209090' && primeiroItem.CodigoProduto.startsWith('11.')) {
                             productLines += `I|S|1|${item.ufDestinatario}|100|0|0|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if((item.ufDestinatario == 'PR' || item.ufDestinatario == 'SP') && item.ncm == '84833090' && primeiroItem.CodigoProduto.startsWith('07.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if(item.ufDestinatario != 'CE' && item.ncm == '84833090' && primeiroItem.CodigoProduto.startsWith('04.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if((item.ufDestinatario == 'PA' || item.ufDestinatario == 'MA') && item.ncm == '84821090' && primeiroItem.CodigoProduto.startsWith('11.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if((item.ufDestinatario == 'PR' || item.ufDestinatario == 'SP' || item.ufDestinatario == 'PA' || item.ufDestinatario == 'BA') && item.ncm == '84819090' && primeiroItem.CodigoProduto.startsWith('04.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if((item.ufDestinatario == 'RS' || item.ufDestinatario == 'MG' || item.ufDestinatario == 'SP') && item.ncm == '84839000' && primeiroItem.CodigoProduto.startsWith('04.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
                         } else if((item.ufDestinatario == 'PR') && item.ncm == '84679100' && primeiroItem.CodigoProduto.startsWith('11.')) {
@@ -186,22 +210,30 @@ async function exportarDadosParaTXTSync(callback) {
                             productLines += `I|S|1|${item.ufDestinatario}|100|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                             //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
+                        } else if ((item.ufDestinatario == 'PA' || item.ufDestinatario == 'BA') && item.ncm == '73182900'  && item.CodigoProduto.startsWith('04.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (item.ncm == '73182900'  && item.CodigoProduto == '04.6742') {
+                            productLines += `I|S|1|SP|010|18|7|0|0\n`;
                         } else if ((item.ufDestinatario == 'ES') && item.ncm == '73182200') {
                             productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if ((item.ufDestinatario == 'ES' || item.ufDestinatario == 'MG' || item.ufDestinatario == 'PR') && item.ncm == '73182100'  && item.CodigoProduto.startsWith('07.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if ((item.ufDestinatario == 'PA' || item.ufDestinatario == 'PR') && item.ncm == '73181600') {
                             productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario == 'MG' && item.ncm == '73181500') {
+                        } else if ((item.ufDestinatario == 'MG' || item.ufDestinatario == 'PR') && item.ncm == '73181500') {
                             productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario == 'SP' && item.ncm == '73181500') {
+                        } else if (item.ufDestinatario == 'SP' && item.ncm == '73181500' && primeiroItem.CodigoProduto.startsWith('04.')) {
                             productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario == 'ES' && item.ncm == '73181500' && primeiroItem.CodigoProduto.startsWith('07.')) {
+                        } else if ((item.ufDestinatario == 'ES' || item.ufDestinatario == 'PA') && item.ncm == '73181500' && primeiroItem.CodigoProduto.startsWith('07.')) {
                             productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario != 'RJ' && (item.cst === '100' || item.cst === '000')) {
+                        }else if (item.ufDestinatario != 'RJ' && (item.cst === '100' || item.cst === '000')) {
                             productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (item.ufDestinatario === 'RJ' && (item.cst === '100' || item.cst === '000')) {
