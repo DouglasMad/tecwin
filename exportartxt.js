@@ -224,7 +224,7 @@ async function exportarDadosParaTXTSync(callback) {
                         } else if ((item.ufDestinatario == 'PA' || item.ufDestinatario == 'PR') && item.ncm == '73181600') {
                             productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if ((item.ufDestinatario == 'MG' || item.ufDestinatario == 'PR') && item.ncm == '73181500') {
+                        } else if ((item.ufDestinatario == 'MG' || item.ufDestinatario == 'PR') && item.ncm == '73181500' && primeiroItem.CodigoProduto.startsWith('07.')) {
                             productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (item.ufDestinatario == 'SP' && item.ncm == '73181500' && primeiroItem.CodigoProduto.startsWith('04.')) {
