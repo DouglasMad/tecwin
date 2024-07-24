@@ -1,5 +1,7 @@
 const axios = require('axios');
-const mysql = require('mysql');
+const mysql = require('mysql2');
+const os = require('os'); // Módulo para obter informações sobre o sistema
+
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -9,6 +11,21 @@ const pool = mysql.createPool({
     password: '123456',
     database: 'db_ncm'
 });
+
+// Função para obter o IP da máquina
+function getLocalIP() {
+    const networkInterfaces = os.networkInterfaces();
+    const addresses = [];
+
+    for (const interfaceName in networkInterfaces) {
+        for (const net of networkInterfaces[interfaceName]) {
+            if (net.family === 'IPv4' && !net.internal) {
+                addresses.push(net.address);
+            }
+        }
+    }
+    return addresses.length > 0 ? addresses[0] : 'Desconhecido';
+}
 
 // Função para obter uma conexão do pool
 const getConnectionFromPool = () => {
@@ -96,6 +113,8 @@ async function apist() {
     try {
         connection = await getConnectionFromPool(); // Obtemos a conexão do pool
 
+        const localIP = getLocalIP(); // Obtém o IP local
+        
         const ncms = await getAllNcms(connection);
         console.log(`Total de NCMs únicos encontrados: ${ncms.length}`);
         if (ncms.length === 0) {
@@ -117,7 +136,7 @@ async function apist() {
                     const stData = response.data.st;
                     await saveDataToDatabase(connection, stData, ncm);
                 } catch (error) {
-                    console.error('Erro ao fazer a chamada NCM:', ncm, error.message);
+                    console.error('Erro ao fazer a chamada NCM:', ncm, error.response ? error.response.data : error.message, `IP da máquina: ${localIP}`);
                 }
             } else {
                 console.log(`NCM já processado: ${ncm}`);
@@ -133,7 +152,7 @@ async function apist() {
     }
 }
 
-// apist();
+apist();
 module.exports = {
     apist
 };

@@ -171,7 +171,7 @@ const inserirProduto = async (codigo, ncm, nomeProduto, unidadeMedida, cstipi) =
 const lerArquivo = async () => {
     try {
         console.log('Lendo arquivo...');
-        const data = await fs.readFile('C:\\tecwin\\sistematec\\txtbase\\tecwinncm.txt', 'utf8');
+        const data = await fs.readFile('C:\\Users\\felli\\OneDrive\\Documentos\\tecwin docs\\tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
         console.log(`Encontradas ${linhas.length} linhas no arquivo.`);
 
@@ -186,7 +186,7 @@ const lerArquivo = async () => {
         console.error('Erro durante a execução:', err);
     }
 };
-//  lerArquivo() // Adicionado para executar a função diretamente
+ lerArquivo() // Adicionado para executar a função diretamente
 
 module.exports = {
     lerArquivo,

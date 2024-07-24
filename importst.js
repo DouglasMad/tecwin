@@ -55,7 +55,7 @@ const importst = async () => {
 
         console.log('Iniciando leitura do arquivo...');
 
-        const data = await fs.readFile('C:\\tecwin\\sistematec\\txtbase\\tecwinst.txt', 'utf8');
+        const data = await fs.readFile('C:\\Users\\felli\\OneDrive\\Documentos\\tecwin docs\\tecwinst.txt', 'utf8');
         const linhas = data.split('\n');
 
         console.log(`Total de ${linhas.length} linhas encontradas no arquivo.`);
