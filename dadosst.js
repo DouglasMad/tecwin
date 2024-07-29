@@ -1,4 +1,4 @@
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const util = require('util');
 
 // Criação do pool de conexões
@@ -54,7 +54,7 @@ async function atualizarDadosST() {
 }
 
 // Executa a função de atualização
-// atualizarDadosST();
+atualizarDadosST();
 
 module.exports = {
     atualizarDadosST

@@ -1,4 +1,4 @@
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 // Criação do pool de conexões
 const pool = mysql.createPool({
@@ -78,7 +78,7 @@ function updateIpiEntBasedOnCstIpi() {
     });
 }
 
-// updateIpiEntBasedOnCstIpi();
+updateIpiEntBasedOnCstIpi();
 
 module.exports = {
     updateIpiEntBasedOnCstIpi

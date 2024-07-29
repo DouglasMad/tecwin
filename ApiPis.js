@@ -1,5 +1,5 @@
 const axios = require('axios');
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -162,7 +162,7 @@ async function main() {
     }
 }
 
-// main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
+main().then(() => console.log('Processamento concluído.')).catch(err => console.error(err));
 
 
 

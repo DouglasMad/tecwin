@@ -1,4 +1,4 @@
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 // Criação do pool de conexões
 const pool = mysql.createPool({
@@ -55,7 +55,7 @@ function updateAjustarAliquotaBasedOnUfDestinatario() {
 }
 
 // Chama a função para realizar a atualização
-// updateAjustarAliquotaBasedOnUfDestinatario();
+updateAjustarAliquotaBasedOnUfDestinatario();
 
 module.exports = {
     updateAjustarAliquotaBasedOnUfDestinatario

@@ -1,5 +1,5 @@
 // Inclui o pacote mysql para conectar ao banco de dados
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 // Cria um pool de conexões com as configurações do banco de dados
 const pool = mysql.createPool({

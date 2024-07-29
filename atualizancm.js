@@ -1,4 +1,4 @@
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 const pool = mysql.createPool({
     host: 'localhost',
@@ -55,7 +55,7 @@ async function atualizaNcmFinal() {
     });
 }
 
-// atualizaNcmFinal();
+atualizaNcmFinal();
 
 module.exports = {
   atualizaNcmFinal

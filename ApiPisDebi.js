@@ -1,5 +1,5 @@
 const axios = require('axios');
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -129,7 +129,7 @@ async function processarNCM(connection, ncm) {
 }
 
 // //Executar manualmente
-//  processarTodosNCMs()
+ processarTodosNCMs()
 
 // Exporta a função processarTodosNCMs() para uso em outros arquivos
 module.exports = {

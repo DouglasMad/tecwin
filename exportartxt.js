@@ -1,5 +1,5 @@
 const fs = require('fs');
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const path = require('path');
 
 // Criação do pool de conexões
@@ -32,7 +32,7 @@ const getConnectionFromPool = () => {
 async function gerarLog(arquivoTxt, tamanhoTxt, callback) {
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const directoryPath = 'C:/tecwin/exportacoes';
+    const directoryPath = 'C:/Users/felli/OneDrive/Documentos/tecwin/exports';
 
     if (!fs.existsSync(directoryPath)){
         fs.mkdirSync(directoryPath);
@@ -67,7 +67,7 @@ async function consultarInformacoesUnica(connection) {
 async function exportarDadosParaTXTSync(callback) {
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
-    const directoryPath = 'C:/tecwin/exportacoes';
+    const directoryPath = 'C:/Users/felli/OneDrive/Documentos/tecwin/exports';
 
     if (!fs.existsSync(directoryPath)) {
         fs.mkdirSync(directoryPath);
@@ -126,130 +126,49 @@ async function exportarDadosParaTXTSync(callback) {
                 // Processar múltiplas linhas I para cada UF relacionada ao produto
                 grupo.forEach(item => {
                     const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';
+                    const ufNacional = ['MG', 'PR', 'RS', 'RJ', 'SP'];
                     
                     // Verificar se o estado já foi adicionado
                     if (!estadosAdicionados.has(item.ufDestinatario)) {
                         // PARA ITENS 07(IMPORTADOS) O CORRETO é 100 ou 110
-                        if ((item.ufDestinatario == 'PR' || item.ufDestinatario == 'ES') && item.ncm == '73269090' && primeiroItem.CodigoProduto.startsWith('07.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        if ((item.ufDestinatario != "SC") && primeiroItem.CodigoProduto.startsWith('07.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|4|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        }
-                        //PARA ITENS 04(NACIONAIS) O CORRETO é 000 ou 010 
-                        else if((item.ufDestinatario == 'PR' || item.ufDestinatario == 'ES' || item.ufDestinatario == 'AC') && item.ncm == '73269090' && primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|7|0|0\n`;
+                        } else if ((item.ufDestinatario != "SC") && primeiroItem.CodigoProduto.startsWith('08.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|4|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if((item.ufDestinatario == 'MA' || item.ufDestinatario == 'SP' || item.ufDestinatario == 'PA' || item.ufDestinatario == 'RS') && item.ncm == '73269090' && primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        } else if ((item.ufDestinatario != "SC") && primeiroItem.CodigoProduto.startsWith('11.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|4|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if((item.ufDestinatario == 'ES') && item.ncm == '73209090' && primeiroItem.CodigoProduto.startsWith('11.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|0|0|0\n`;
+                        } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('07.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if((item.ufDestinatario == 'PR' || item.ufDestinatario == 'SP') && item.ncm == '84833090' && primeiroItem.CodigoProduto.startsWith('07.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('08.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if(item.ufDestinatario != 'CE' && item.ncm == '84833090' && primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('11.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|100|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if((item.ufDestinatario == 'PA' || item.ufDestinatario == 'MA') && item.ncm == '84821090' && primeiroItem.CodigoProduto.startsWith('11.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if((item.ufDestinatario == 'PR' || item.ufDestinatario == 'SP' || item.ufDestinatario == 'PA' || item.ufDestinatario == 'BA') && item.ncm == '84819090' && primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if((item.ufDestinatario == 'RS' || item.ufDestinatario == 'MG' || item.ufDestinatario == 'SP' || item.ufDestinatario == 'AC' || item.ufDestinatario == 'PR') && item.ncm == '84839000' && primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if((item.ufDestinatario == 'PR') && item.ncm == '84679100' && primeiroItem.CodigoProduto.startsWith('11.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if (item.ufDestinatario == 'MA' && item.ncm == '84122900') {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if ((item.ufDestinatario == 'MG' || item.ufDestinatario == 'PR') && item.ncm == '84123110') {
+                        } else if (primeiroItem.CodigoProduto.startsWith('02.')) {
                             productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        }
-                        else if (item.ufDestinatario == 'ES' && item.ncm == '84636060') {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        } else if (primeiroItem.CodigoProduto.startsWith('04.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if ((item.ufDestinatario == 'MA') && item.ncm == '84213100' && primeiroItem.CodigoProduto.startsWith('11.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        } else if (ufNacional.includes(item.ufDestinatario) && primeiroItem.CodigoProduto.startsWith('02.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if ((item.ufDestinatario == 'ES') && item.ncm == '84314929' && primeiroItem.CodigoProduto.startsWith('11.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
+                        } else if (ufNacional.includes(item.ufDestinatario) && primeiroItem.CodigoProduto.startsWith('04.')) {
+                            productLines += `I|S|1|${item.ufDestinatario}|000|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if ((item.ufDestinatario == 'MA' || item.ufDestinatario == 'ES') && item.ncm == '84212990' && primeiroItem.CodigoProduto.startsWith('07.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if ((item.ufDestinatario == 'MG') && item.ncm == '84212990' && primeiroItem.CodigoProduto.startsWith('07.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if (item.ncm == '84212990' && item.CodigoProduto == '07.990035' && !adicionouES) {
-                            productLines += `I|S|1|ES|100|0|${item.aliquotaInterestadualMI}|0|0\n`;
-                            adicionouES = true; // Definir como true para evitar adicionar ES novamente
-                        }else if (primeiroItem.CodigoProduto.startsWith('04.') && item.aliquotainterestadual != null && !linhaAdicionada) {
+                        } else if (primeiroItem.CodigoProduto.startsWith('04.') && item.aliquotainterestadual != null && !linhaAdicionada) {
                             productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotainterestadual}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario == 'PR' && item.ncm == '84254910') {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                            //    Sit Trib  | aliquota icms/st      |          Aliquota           | FCP | aliq interna |
-                        } else if ((item.ufDestinatario == 'PA' || item.ufDestinatario == 'BA') && item.ncm == '73182900'  && item.CodigoProduto.startsWith('04.') && item.CodigoProduto == '04.6742') {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ncm == '73182900'  && item.CodigoProduto == '04.6742') {
-                            productLines += `I|S|1|SP|010|18|7|0|0\n`;
-                        } else if ((item.ufDestinatario == 'ES') && item.ncm == '73182200') {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if ((item.ufDestinatario == 'ES' || item.ufDestinatario == 'MG' || item.ufDestinatario == 'PR') && item.ncm == '73182100'  && item.CodigoProduto.startsWith('07.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if ((item.ufDestinatario == 'PA' || item.ufDestinatario == 'PR') && item.ncm == '73181600') {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if ((item.ufDestinatario == 'MG' || item.ufDestinatario == 'PR') && item.ncm == '73181500' && primeiroItem.CodigoProduto.startsWith('07.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario == 'SP' && item.ncm == '73181500' && primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|010|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if ((item.ufDestinatario == 'ES' || item.ufDestinatario == 'PA') && item.ncm == '73181500' && primeiroItem.CodigoProduto.startsWith('07.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|110|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        }else if (item.ufDestinatario != 'RJ' && (item.cst === '100' || item.cst === '000')) {
+                        } else if (item.ufDestinatario != 'SC' && (item.cst === '100' || item.cst === '000')) {
                             productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario === 'RJ' && (item.cst === '100' || item.cst === '000')) {
+                        } else if (item.ufDestinatario === 'SC' && (item.cst === '100' || item.cst === '000')) {
                             productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|0|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario == 'RJ' && (item.cst == '110')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|20|2|22\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario == 'RJ' && (item.cst == '010')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|000|0|20|2|22\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.ufDestinatario == 'RJ' && (item.cst == '110' || item.cst == '010')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|20|20|2|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (item.cst === '110' || item.cst === '010') {
-                            productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else {
                             productLines += `I|S|1|${item.ufDestinatario}|${item.cst}|${item.aliquotaEfetiva}|${item.aliquotaInterestadualMI}|${fcpItem}|${item.aliquotaEfetiva}\n`;

@@ -1,5 +1,5 @@
 const fs = require('fs').promises;
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 // Criando o pool de conexões
 const pool = mysql.createPool({
@@ -81,7 +81,7 @@ const importst = async () => {
     }
 };
 
-//  importst(); // Adicionado para executar a função diretamente
+ importst(); // Adicionado para executar a função diretamente
 
 module.exports = {
     importst

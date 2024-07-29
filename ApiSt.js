@@ -126,7 +126,7 @@ async function apist() {
             const processed = await ncmProcessed(connection, ncm);
 
             if (!processed) {
-                const uf_saida = "RJ";
+                const uf_saida = "SC";
                 const chave = "TFACS-Q4LVT-XYYNF-ZNW59";
                 const cliente = "02119874";
                 const formato = "json";
