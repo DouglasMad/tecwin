@@ -25,10 +25,8 @@ async function processaNCMs() {
         for (const ncmRow of ncmRows) {
             const selectQuery = `
                 SELECT DISTINCT 
-                    st_ncm.ufDestinatario, 
+                    tec_stcst.uf AS ufDestinatario,
                     tec_stcst.cst, 
-                    st_ncm.aliquotadestino, 
-                    st_ncm.aliquotaInterestadualMI,
                     tec_produto.ncm,
                     tec_produto.ipient,
                     tec_produto.unidade,
@@ -36,25 +34,17 @@ async function processaNCMs() {
                     tec_ipi.ipi,
                     tec_pisdeb.pisDebito,
                     tec_pisdeb.cofinsDebito,
-                    tec_pisdeb.cst as cstpis,
+                    tec_pisdeb.cst AS cstpis,
                     tec_produto.codigo AS codigoProduto,
-                    tec_produto.nmproduto AS nomeProduto,
-                    st_ncm.aliquotaFCP,
-                    st_ncm.aliquotaInterestadualMI,
-                    st_ncm.aliquotaInterestadual,
-                    st_ncm.aliquotaEfetiva
+                    tec_produto.nmproduto AS nomeProduto
                 FROM 
-                    st_ncm 
-                LEFT JOIN 
-                    tec_stcst ON st_ncm.ufDestinatario = tec_stcst.uf AND st_ncm.ncmid = tec_stcst.ncm 
+                    tec_stcst
                 LEFT JOIN 
                     tec_produto ON tec_stcst.codigo = tec_produto.codigo 
                 LEFT JOIN
                     tec_ipi ON tec_ipi.ncm_codigo = tec_produto.ncm
-                    join
-                    tec_pisdeb
-                    on
-                    tec_pisdeb.ncm= tec_produto.ncm
+                LEFT JOIN
+                    tec_pisdeb ON tec_pisdeb.ncm = tec_produto.ncm
                 WHERE 
                     tec_produto.codigo = ?;
             `;
@@ -62,30 +52,29 @@ async function processaNCMs() {
             const results = await pool_query(selectQuery, [ncmRow.codigoProduto]);
 
             for (const row of results) {
-              
                 const insertQuery = `
-                    INSERT INTO unica (ufDestinatario, cst, cstipi, unidade, ipient, ipi, ncm,aliquotadestino, aliquotaInterestadualMI, pisDebito,cofinsDebito,cstpis,CodigoProduto, NomeProduto,aliquotaFCP,aliquotaInterestadual,aliquotaEfetiva)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)
+                    INSERT INTO unica (
+                        ufDestinatario, cst, cstipi, unidade, ipient, ipi, ncm,
+                        pisDebito, cofinsDebito, cstpis, CodigoProduto, NomeProduto
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE
-                    ufDestinatario = VALUES(ufDestinatario),
-                    cst = VALUES(cst),
-                    cstipi = VALUES(cstipi),
-                    unidade = VALUES(unidade),
-                    ipient = VALUES(ipient),
-                    ipi = VALUES(ipi),
-                    aliquotadestino = VALUES (aliquotadestino),
-                    aliquotaInterestadualMI = VALUES(aliquotaInterestadualMI),
-                    pisDebito = VALUES(pisDebito),
-                    cofinsDebito = VALUES(cofinsDebito),
-                    cstpis = VALUES(cstpis),
-                    CodigoProduto = VALUES(CodigoProduto),
-                    NomeProduto = VALUES(NomeProduto),
-                    aliquotaFCP = VALUES (aliquotaFCP),
-                    aliquotaInterestadual = VALUES (aliquotaInterestadual),
-                    aliquotaEfetiva = VALUES(aliquotaEfetiva);
-
+                        ufDestinatario = VALUES(ufDestinatario),
+                        cst = VALUES(cst),
+                        cstipi = VALUES(cstipi),
+                        unidade = VALUES(unidade),
+                        ipient = VALUES(ipient),
+                        ipi = VALUES(ipi),
+                        pisDebito = VALUES(pisDebito),
+                        cofinsDebito = VALUES(cofinsDebito),
+                        cstpis = VALUES(cstpis),
+                        CodigoProduto = VALUES(CodigoProduto),
+                        NomeProduto = VALUES(NomeProduto);
                 `;
-                await pool_query(insertQuery, [row.ufDestinatario, row.cst, row.cstipi, row.unidade, row.ipient, row.ipi, row.ncm, row.aliquotaDestino, row.aliquotaInterestadualMI,row.pisDebito,row.cofinsDebito,row.cstpis, row.codigoProduto, row.nomeProduto,row.aliquotaFCP,row.aliquotaInterestadual,row.aliquotaEfetiva]);
+                await pool_query(insertQuery, [
+                    row.ufDestinatario, row.cst, row.cstipi, row.unidade, row.ipient, row.ipi,
+                    row.ncm, row.pisDebito, row.cofinsDebito, row.cstpis, row.codigoProduto, row.nomeProduto
+                ]);
             }
             console.log(`Processado NCM: ${ncmRow.codigoProduto} com ${results.length} registros.`);
         }
@@ -100,4 +89,4 @@ processaNCMs();
 
 module.exports = {
     processaNCMs
-}
+};
