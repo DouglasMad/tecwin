@@ -105,10 +105,10 @@ async function exportarDadosParaTXTSync(callback) {
 
             // Linhas S para PIS e COFINS, e linha H para IPI
             if (primeiroItem.pisDebito != null) {
-                productLines += `S|1|P|S|${primeiroItem.cstpis}|${primeiroItem.pisDebito}\n`;
+                productLines += `S|2|P|S|${primeiroItem.cstpis}|${primeiroItem.pisDebito}\n`;
             }
             if (primeiroItem.cofinsDebito != null) {
-                productLines += `S|1|C|S|${primeiroItem.cstpis}|${primeiroItem.cofinsDebito}\n`;
+                productLines += `S|2|C|S|${primeiroItem.cstpis}|${primeiroItem.cofinsDebito}\n`;
             }
 
             const cstIpiCleaned = primeiroItem.cstipi.toString().replace(/[\r\n]+/g, '');
@@ -118,17 +118,6 @@ async function exportarDadosParaTXTSync(callback) {
             }else{
                 productLines += `H|0|${primeiroItem.ipi}|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
             }
-
-            grupo.forEach(item => {
-                const fcpItem = item.aliquotaFCP != null ? item.aliquotaFCP : '';
-                //Se prefixo for 07 usar aliquotainternaMI else aliquotaInterestadual
-                if (primeiroItem.CodigoProduto.startsWith('04.') && item.ufDestinatario == "RJ"){
-                    productLines += `I|E|1|${item.ufDestinatario}|000|0|20|2|22\n`;
-                }
-                else if (primeiroItem.CodigoProduto.startsWith('07.') && item.ufDestinatario == 'RJ'){
-                    productLines += `I|E|1|${item.ufDestinatario}|100|0|20|2|22\n`;
-                }
-                });
 
                 let adicionouES = false;
                 let estadosAdicionados = new Set(); // Conjunto para rastrear os estados já adicionados
@@ -146,40 +135,40 @@ async function exportarDadosParaTXTSync(callback) {
                     if (!estadosAdicionados.has(item.ufDestinatario)) {
                         // PARA ITENS 07(IMPORTADOS) O CORRETO é 100 ou 110
                         if ((item.ufDestinatario != "SC") && primeiroItem.CodigoProduto.startsWith('07.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|4|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|100|0|4|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if ((item.ufDestinatario != "SC") && primeiroItem.CodigoProduto.startsWith('08.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|4|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|100|0|4|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if ((item.ufDestinatario != "SC") && primeiroItem.CodigoProduto.startsWith('11.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|4|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|100|0|4|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('07.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|17|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|100|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('08.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|17|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|100|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('11.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|100|0|17|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|100|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('02.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|000|0|17|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|000|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|000|0|17|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|000|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (primeiroItem.CodigoProduto.startsWith('02.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|000|0|7|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|000|0|7|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|000|0|7|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|000|0|7|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (ufNacional.includes(item.ufDestinatario) && primeiroItem.CodigoProduto.startsWith('02.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|000|0|12|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|000|0|12|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (ufNacional.includes(item.ufDestinatario) && primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|1|${item.ufDestinatario}|000|0|12|0|0\n`;
+                            productLines += `I|S|2|${item.ufDestinatario}|000|0|12|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } 
                     }
