@@ -20,6 +20,7 @@ const { atualizarUnica } = require('./updateUnica');
 const { Cstpr } = require('./cstpr');
 const {updateRobel} = require('./updateRobel');
 const { updateCst84 } = require('./updateCst8412');
+const { updateCstipiBasedOnAliquotaDestino } = require('./ajustarcstipiUnica');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -206,6 +207,8 @@ async function verificarEExecutarTerceiraAPI(connection) {
       console.log("Robel executada com sucesso.")
       await updateCst84();
       console.log("Robel executada com sucesso.")
+      await updateCstipiBasedOnIpi();
+      console.log("ajustarcstipiUnica executada com sucesso")
     } catch (err) {
       console.error("Erro durante a execução: ", err);
     }

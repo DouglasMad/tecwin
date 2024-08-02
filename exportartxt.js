@@ -152,7 +152,10 @@ async function exportarDadosParaTXTSync(callback) {
                         } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('11.')) {
                             productLines += `I|S|2|${item.ufDestinatario}|100|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('02.')) {
+                        } 
+                        
+                        // A PARTIR DE AQUI EU TRATO ITENS NACIONAIS 02 / 04
+                        else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('02.')) {
                             productLines += `I|S|2|${item.ufDestinatario}|000|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('04.')) {
