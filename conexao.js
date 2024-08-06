@@ -20,7 +20,7 @@ const { atualizarUnica } = require('./updateUnica');
 const { Cstpr } = require('./cstpr');
 const {updateRobel} = require('./updateRobel');
 const { updateCst84 } = require('./updateCst8412');
-const { updateCstipiBasedOnAliquotaDestino } = require('./ajustarcstipiUnica');
+const { updateCstipiBasedOnAliquotaDestino, updateCstipiBasedOnIpi } = require('./ajustarcstipiUnica');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({

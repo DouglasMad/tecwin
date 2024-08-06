@@ -161,19 +161,19 @@ async function exportarDadosParaTXTSync(callback) {
                         } else if ((item.ufDestinatario == "SC") && primeiroItem.CodigoProduto.startsWith('04.')) {
                             productLines += `I|S|2|${item.ufDestinatario}|000|0|17|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (primeiroItem.CodigoProduto.startsWith('02.')) {
-                            productLines += `I|S|2|${item.ufDestinatario}|000|0|7|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } else if (primeiroItem.CodigoProduto.startsWith('04.')) {
-                            productLines += `I|S|2|${item.ufDestinatario}|000|0|7|0|0\n`;
-                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (ufNacional.includes(item.ufDestinatario) && primeiroItem.CodigoProduto.startsWith('02.')) {
                             productLines += `I|S|2|${item.ufDestinatario}|000|0|12|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
                         } else if (ufNacional.includes(item.ufDestinatario) && primeiroItem.CodigoProduto.startsWith('04.')) {
                             productLines += `I|S|2|${item.ufDestinatario}|000|0|12|0|0\n`;
                             estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
-                        } 
+                        } else if (primeiroItem.CodigoProduto.startsWith('02.')) {
+                            productLines += `I|S|2|${item.ufDestinatario}|000|0|7|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        } else if (primeiroItem.CodigoProduto.startsWith('04.')) {
+                            productLines += `I|S|2|${item.ufDestinatario}|000|0|7|0|0\n`;
+                            estadosAdicionados.add(item.ufDestinatario); // Adicionar estado ao conjunto
+                        }
                     }
                 
                     // Resetar a variável para a próxima iteração
