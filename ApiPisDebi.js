@@ -129,7 +129,7 @@ async function processarNCM(connection, ncm) {
 }
 
 // //Executar manualmente
- processarTodosNCMs()
+ // processarTodosNCMs()
 
 // Exporta a função processarTodosNCMs() para uso em outros arquivos
 module.exports = {

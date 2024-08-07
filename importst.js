@@ -81,7 +81,7 @@ const importst = async () => {
     }
 };
 
- importst(); // Adicionado para executar a função diretamente
+//  importst(); // Adicionado para executar a função diretamente
 
 module.exports = {
     importst

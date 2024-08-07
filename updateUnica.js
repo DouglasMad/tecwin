@@ -33,7 +33,7 @@ pool.query(updateSql, (error, results) => {
 });
 }
 
-atualizarUnica()
+//  atualizarUnica()
 
 module.exports = {
     atualizarUnica

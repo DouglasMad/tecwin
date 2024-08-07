@@ -27,7 +27,7 @@ function updateCst84() {
     });
 }
 
-updateCst84();
+//  updateCst84();
 
 module.exports = {
     updateCst84

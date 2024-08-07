@@ -28,7 +28,7 @@ function Cstpr() {
     });
 }
 
-Cstpr();
+// Cstpr();
 
 module.exports = {
     Cstpr
