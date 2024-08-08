@@ -10,8 +10,10 @@
     "keywords": [],
     "author": "",
     "license": "ISC",
-    "script": {
-        "start": "electron ./main.js"
+    "scripts": {
+        "start": "electron ./main.js",
+        "pack": "electron-builder --dir",
+        "dist": "electron-builder"
     },
     "build": {
         "appId": "com.example.yourapp",

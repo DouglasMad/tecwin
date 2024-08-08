@@ -1,6 +1,7 @@
 const fs = require('fs');
 const mysql = require('mysql2');
 const path = require('path');
+const { ipcRenderer } = require('electron');
 
 // Criação do pool de conexões
 const pool = mysql.createPool({
@@ -194,6 +195,8 @@ async function exportarDadosParaTXTSync(callback) {
                         console.log(logSuccessMessage);
                     }
                 });
+                // Envia evento IPC para notificar que o arquivo foi gerado
+                ipcRenderer.send('file-generated');
                 callback(null, `Arquivo ${fileName} gerado com sucesso.`);
             } else {
                 callback(writeError);

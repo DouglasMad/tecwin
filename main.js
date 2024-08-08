@@ -105,6 +105,22 @@ function abrirConfigurador() {
     }
 }
 
+// IPC para notificações
+ipcMain.on('file-generated', () => {
+    // Exibe uma notificação
+    new Notification({
+        title: 'Processo Concluído',
+        body: 'O arquivo TXT foi gerado com sucesso!'
+    }).show();
+
+    // Abre ou foca a janela de configurações
+    if (settingsWindow) {
+        settingsWindow.focus();
+    } else {
+        abrirConfigurador();
+    }
+});
+
 process.on('SIGINT', () => {
     if (mainWindow) {
         // Fecha a janela principal

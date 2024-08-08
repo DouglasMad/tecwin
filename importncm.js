@@ -1,5 +1,5 @@
 const fs = require('fs').promises;
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const { promisify } = require('util');
 
 // Criação do pool de conexões
