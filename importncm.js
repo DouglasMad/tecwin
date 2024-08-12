@@ -141,25 +141,26 @@ const tabelasParaReinicar = ['dadosncm', 'dadosst', 'st_ncm', 'tec_ipi', 'tec_pi
 
 
 
-// Função para inserir um produto no banco de dados
-const inserirProduto = async (codigo, ncm, nomeProduto, unidadeMedida, cstipi) => {
+// Função para inserir produtos em lote
+const inserirProdutosEmLote = async (produtos) => {
     let connection;
     try {
         connection = await getConnectionFromPool();
-        const ncmSemPontos = ncm ? ncm.replace(/\./g, '') : '';
 
-        const selectQuery = 'SELECT * FROM tec_produto WHERE codigo = ?';
-        const selectResult = await queryWithConnection(connection, selectQuery, [codigo]);
+        const placeholders = produtos.map(() => '(?, ?, ?, ?, ?)').join(', ');
+        const insertQuery = `INSERT INTO tec_produto (codigo, ncm, nmproduto, unidade, cstipi) VALUES ${placeholders}`;
+        const insertValues = produtos.flatMap(produto => [
+            produto.codigo || '',
+            produto.ncm ? produto.ncm.replace(/\./g, '') : '',
+            produto.nomeProduto || '',
+            produto.unidadeMedida || '',
+            produto.cstipi || ''
+        ]);
 
-        if (selectResult.length === 0) {
-            const insertQuery = 'INSERT INTO tec_produto (codigo, ncm, nmproduto, unidade, cstipi) VALUES (?, ?, ?, ?, ?)';
-            await queryWithConnection(connection, insertQuery, [codigo, ncmSemPontos, nomeProduto, unidadeMedida, cstipi]);
-            console.log(`Produto com código ${codigo} inserido com sucesso!`);
-        } else {
-            console.log(`Produto com código ${codigo} já existe no banco de dados.`);
-        }
+        await queryWithConnection(connection, insertQuery, insertValues);
+        console.log(`Lote de ${produtos.length} produtos inserido com sucesso!`);
     } catch (err) {
-        console.error('Erro ao inserir o produto:', err);
+        console.error('Erro ao inserir o lote de produtos:', err);
     } finally {
         if (connection) {
             connection.release(); // Libera a conexão de volta para o pool
@@ -175,10 +176,26 @@ const lerArquivo = async () => {
         const linhas = data.split('\n');
         console.log(`Encontradas ${linhas.length} linhas no arquivo.`);
 
+        const batchSize = 1000; // Tamanho do lote
+        let batch = [];
+
         for (let linha of linhas) {
             const [codigo, ncm, nomeProduto, unidadeMedida, cstipi] = linha.split('|');
-            console.log(`Processando linha: ${linha}`);
-            await inserirProduto(codigo, ncm, nomeProduto, unidadeMedida, cstipi);
+            if (codigo && nomeProduto) { // Verifica se os campos essenciais estão presentes
+                batch.push({ codigo, ncm, nomeProduto, unidadeMedida, cstipi });
+
+                if (batch.length === batchSize) {
+                    await inserirProdutosEmLote(batch); // Insere lote no banco de dados
+                    batch = []; // Reseta o lote
+                }
+            } else {
+                console.warn(`Linha ignorada devido a campos faltando: ${linha}`);
+            }
+        }
+
+        // Insere os itens restantes que não completaram um lote
+        if (batch.length > 0) {
+            await inserirProdutosEmLote(batch);
         }
 
         console.log('Finalizado.');
@@ -186,6 +203,7 @@ const lerArquivo = async () => {
         console.error('Erro durante a execução:', err);
     }
 };
+
  lerArquivo() // Adicionado para executar a função diretamente
 
 module.exports = {
