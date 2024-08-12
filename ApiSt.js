@@ -136,7 +136,7 @@ async function apist() {
                     const stData = response.data.st;
                     await saveDataToDatabase(connection, stData, ncm);
                 } catch (error) {
-                    console.error('Erro ao fazer a chamada NCM:', ncm, error.response ? error.response.data : error.message, `IP da máquina: ${localIP}`);
+                    console.error('Erro ao fazer a chamada NCM:', ncm, error.response ? error.response.data : error.message);
                 }
             } else {
                 console.log(`NCM já processado: ${ncm}`);
@@ -152,7 +152,7 @@ async function apist() {
     }
 }
 
-// apist();
+apist();
 module.exports = {
     apist
 };

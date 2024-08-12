@@ -196,7 +196,7 @@ async function exportarDadosParaTXTSync(callback) {
                     }
                 });
                 // Envia evento IPC para notificar que o arquivo foi gerado
-                ipcRenderer.send('file-generated');
+                // ipcRenderer.send('file-generated');
                 callback(null, `Arquivo ${fileName} gerado com sucesso.`);
             } else {
                 callback(writeError);
@@ -212,13 +212,13 @@ async function exportarDadosParaTXTSync(callback) {
     }
 }
 
-// exportarDadosParaTXTSync((error, successMessage) => {
-//     if (error) {
-//         console.error('Erro ao exportar dados para o arquivo TXT:', error);
-//     } else {
-//         console.log("Executando gerador de txt", successMessage);
-//     }
-// });
+exportarDadosParaTXTSync((error, successMessage) => {
+    if (error) {
+        console.error('Erro ao exportar dados para o arquivo TXT:', error);
+    } else {
+        console.log("Executando gerador de txt", successMessage);
+    }
+});
 
 
 module.exports = {
