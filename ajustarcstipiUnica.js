@@ -35,7 +35,7 @@ function updateCstipiBasedOnIpi() {
 }
 
 // Chama a função para realizar a atualização
-// updateCstipiBasedOnIpi();
+updateCstipiBasedOnIpi();
 
 module.exports = {
     updateCstipiBasedOnIpi

@@ -172,7 +172,7 @@ const inserirProdutosEmLote = async (produtos) => {
 const lerArquivo = async () => {
     try {
         console.log('Lendo arquivo...');
-        const data = await fs.readFile('C:\\Users\\felli\\OneDrive\\Documentos\\tecwin docs\\tecwinncm.txt', 'utf8');
+        const data = await fs.readFile('C:\\Users\\Administrador.PLASSER\\Desktop\\tecwin\\docs\\tecwinncm.txt', 'utf8');
         const linhas = data.split('\n');
         console.log(`Encontradas ${linhas.length} linhas no arquivo.`);
 

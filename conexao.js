@@ -21,6 +21,7 @@ const { Cstpr } = require('./cstpr');
 const {updateRobel} = require('./updateRobel');
 const { updateCst84 } = require('./updateCst8412');
 const { updateCstipiBasedOnAliquotaDestino, updateCstipiBasedOnIpi } = require('./ajustarcstipiUnica');
+const { updateIpi } = require('./updateIPi');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -46,7 +47,7 @@ const getConnectionFromPool = () => {
 };
 
 async function atualizarStatusHTML(apiId, novoStatus) {
-  const filePath = 'C:/Users/felli/OneDrive/Documentos/tecwin/index.html';
+  const filePath = 'C:/Users/Administrador.PLASSER/Desktop/tecwin/index.html';
 
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -75,7 +76,7 @@ async function atualizarStatusHTML(apiId, novoStatus) {
 }
 
 async function atualizarConsoleHTML(apiId, novoStatus) {
-  const filePath = 'C:/Users/felli/OneDrive/Documentos/tecwin/index.html';
+  const filePath = 'C:/Users/Administrador.PLASSER/Desktop/tecwin/index.html';
 
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -165,8 +166,8 @@ async function verificarEExecutarSegundaAPI(connection) {
       console.log("apiSt concluido.");
       await main();
       console.log("main (API Pis) concluido.");
-      await processarTodosNCMs();
-      console.log("processarTodosNCMs concluido.");
+      // await processarTodosNCMs();
+      // console.log("processarTodosNCMs concluido.");
       await atualizaNcmFinal();
       console.log("atualizaNcmFinal concluido.");
       await atualizarDadosST();
@@ -193,22 +194,24 @@ async function verificarEExecutarTerceiraAPI(connection) {
     try {
       await processaNCMs();
       console.log("processaNCMs concluido.");
-      await updateCST();
-      console.log("updateCST concluido.");
+      // await updateCST();
+      // console.log("updateCST concluido.");
       await ajustaFormatoDecimal();
       console.log("ajustaFormatoDecimal concluido.");
-      await atualizarUnica();
-      console.log('Ajuste da aliquota realizado')
-      await ajustaCSTparaZeroOuCem();
-      console.log("Ajuste CST para Zero ou Cem concluido");
-      await Cstpr();
-      console.log("cstPr executada com sucesso.")
-      await updateRobel();
-      console.log("Robel executada com sucesso.")
-      await updateCst84();
-      console.log("Robel executada com sucesso.")
-      await updateCstipiBasedOnIpi();
-      console.log("ajustarcstipiUnica executada com sucesso")
+      // await atualizarUnica();
+      // console.log('Ajuste da aliquota realizado')
+      // await ajustaCSTparaZeroOuCem();
+      // console.log("Ajuste CST para Zero ou Cem concluido");
+      // await Cstpr();
+      // console.log("cstPr executada com sucesso.")
+      // await updateRobel();
+      // console.log("Robel executada com sucesso.")
+      // await updateCst84();
+      // console.log("updateCst84 executada com sucesso.")
+      // await updateCstipiBasedOnIpi();
+      // console.log("ajustarcstipiUnica executada com sucesso")
+      await updateIpi();
+      console.log("updateIpi executada com sucesso")
     } catch (err) {
       console.error("Erro durante a execução: ", err);
     }

@@ -33,7 +33,7 @@ const getConnectionFromPool = () => {
 async function gerarLog(arquivoTxt, tamanhoTxt, callback) {
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const directoryPath = 'C:/Users/felli/OneDrive/Documentos/tecwin/exports';
+    const directoryPath = 'C:/Users/Administrador.PLASSER/Desktop/tecwin/exports';
 
     if (!fs.existsSync(directoryPath)){
         fs.mkdirSync(directoryPath);
@@ -68,7 +68,7 @@ async function consultarInformacoesUnica(connection) {
 async function exportarDadosParaTXTSync(callback) {
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
-    const directoryPath = 'C:/Users/felli/OneDrive/Documentos/tecwin/exports';
+    const directoryPath = 'C:/Users/Administrador.PLASSER/Desktop/tecwin/exports';
 
     if (!fs.existsSync(directoryPath)) {
         fs.mkdirSync(directoryPath);
@@ -114,11 +114,17 @@ async function exportarDadosParaTXTSync(callback) {
 
             const cstIpiCleaned = primeiroItem.cstipi.toString().replace(/[\r\n]+/g, '');
             
-            if(cstIpiCleaned == '01' || cstIpiCleaned == '51'){
-                productLines += `H|0|0|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
+            // if(cstIpiCleaned == '01' || cstIpiCleaned == '51'){
+            //     productLines += `H|0|0|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
+            // }else{
+            //     productLines += `H|0|${primeiroItem.ipi}|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
+            // }
+            if(primeiroItem.ipi != '0'){
+                productLines += `H|0|${primeiroItem.ipi}|50|00\n`;
             }else{
-                productLines += `H|0|${primeiroItem.ipi}|${cstIpiCleaned}|${primeiroItem.ipient}\n`;
+                productLines += `H|0|${primeiroItem.ipi}|51|01\n`;
             }
+
 
                 let adicionouES = false;
                 let estadosAdicionados = new Set(); // Conjunto para rastrear os estados já adicionados
