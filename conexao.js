@@ -166,16 +166,10 @@ async function verificarEExecutarSegundaAPI(connection) {
       console.log("apiSt concluido.");
       await main();
       console.log("main (API Pis) concluido.");
-      // await processarTodosNCMs();
-      // console.log("processarTodosNCMs concluido.");
       await atualizaNcmFinal();
-      console.log("atualizaNcmFinal concluido.");
+      console.log("atualizaNcm.js concluido.");
       await atualizarDadosST();
-      console.log("atualizarDadosST concluido.");
-      await updateAjustarAliquotaBasedOnUfDestinatario();
-      console.log("updateAjustarAliquotaBasedOnUfDestinatario concluido.");
-      await updateAliq();
-      console.log("updateAliq concluido.");
+      console.log("DadosST concluido.");
     } catch (err) {
       console.error("Erro durante a execução: ", err);
     }
@@ -194,22 +188,8 @@ async function verificarEExecutarTerceiraAPI(connection) {
     try {
       await processaNCMs();
       console.log("processaNCMs concluido.");
-      // await updateCST();
-      // console.log("updateCST concluido.");
       await ajustaFormatoDecimal();
-      console.log("ajustaFormatoDecimal concluido.");
-      // await atualizarUnica();
-      // console.log('Ajuste da aliquota realizado')
-      // await ajustaCSTparaZeroOuCem();
-      // console.log("Ajuste CST para Zero ou Cem concluido");
-      // await Cstpr();
-      // console.log("cstPr executada com sucesso.")
-      // await updateRobel();
-      // console.log("Robel executada com sucesso.")
-      // await updateCst84();
-      // console.log("updateCst84 executada com sucesso.")
-      // await updateCstipiBasedOnIpi();
-      // console.log("ajustarcstipiUnica executada com sucesso")
+      console.log("ajustacst.js concluido.");
       await updateIpi();
       console.log("updateIpi executada com sucesso")
     } catch (err) {

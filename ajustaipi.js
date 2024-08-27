@@ -75,6 +75,7 @@ function updateIpiEntBasedOnCstIpi() {
         });
 
         connection.end();
+        console.log('terminou')
     });
 }
 
