@@ -73,12 +73,22 @@ const inserirDadosEmLote = async (dados) => {
 
 // Função para processar um NCM e retornar dados distintos para cada estado
 const processaNCM = async (produto) => {
-    // Busca todos os detalhes de produtos com o mesmo NCM na tabela unica
+    // Busca todos os detalhes de produtos com o mesmo NCM na tabela unica, agrupando por ufDestinatario
     const detalhes = await pool_query(`
-        SELECT DISTINCT u.ufDestinatario, u.cst, u.cstipi, u.unidade, u.ipient, u.ipi, u.ncm,
-                        u.pisDebito, u.cofinsDebito, u.cstpis
+        SELECT 
+            u.ufDestinatario,
+            MIN(u.cst) AS cst, 
+            MIN(u.cstipi) AS cstipi, 
+            MIN(u.unidade) AS unidade, 
+            MIN(u.ipient) AS ipient, 
+            MIN(u.ipi) AS ipi, 
+            u.ncm,
+            MIN(u.pisDebito) AS pisDebito, 
+            MIN(u.cofinsDebito) AS cofinsDebito, 
+            MIN(u.cstpis) AS cstpis
         FROM unica u
         WHERE u.ncm = ?
+        GROUP BY u.ufDestinatario, u.ncm
     `, [produto.ncm]);
 
     if (detalhes.length > 0) {
@@ -103,6 +113,7 @@ const processaNCM = async (produto) => {
 
     return [];
 };
+
 
 // Função principal para preencher produtos sem detalhes
 const preencherProdutosSemDetalhes = async () => {
