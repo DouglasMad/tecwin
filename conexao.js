@@ -22,6 +22,7 @@ const {updateRobel} = require('./updateRobel');
 const { updateCst84 } = require('./updateCst8412');
 const { updateCstipiBasedOnAliquotaDestino, updateCstipiBasedOnIpi } = require('./ajustarcstipiUnica');
 const { updateIpi } = require('./updateIPi');
+const { preencherProdutosSemDetalhes } = require('./adcProdSemDetalhes');
 
 // Configuração do pool de conexões MySQL
 const pool = mysql.createPool({
@@ -145,7 +146,7 @@ async function verificarEExecutarPrimeiraAPI(connection) {
       await importst();
       console.log("ImportSt concluido.");
       await updateIpiEntBasedOnCstIpi();
-      console.log("UpdateIpiEntBasedOnCstIpi concluido.");
+      console.log("Ajustaipi concluido.");
     } catch (err) {
       console.error("Erro durante a execução: ", err);
     }
@@ -190,6 +191,8 @@ async function verificarEExecutarTerceiraAPI(connection) {
       console.log("processaNCMs concluido.");
       await ajustaFormatoDecimal();
       console.log("ajustacst.js concluido.");
+      await preencherProdutosSemDetalhes();
+      console.log("adcprodsemdetalhes.js concluido.");
       await updateIpi();
       console.log("updateIpi executada com sucesso")
     } catch (err) {

@@ -1,5 +1,6 @@
 const mysql = require('mysql2');
 const util = require('util');
+const cliProgress = require("cli-progress")
 
 // Configuração do pool de conexões
 const pool = mysql.createPool({
@@ -9,13 +10,14 @@ const pool = mysql.createPool({
     database: 'db_ncm',
     port: '3306',
     waitForConnections: true,
-    connectionLimit: 50, // Aumente o número de conexões simultâneas
+    connectionLimit: 10000, // Aumente o número de conexões simultâneas
     queueLimit: 0
 });
 
 // Promisify para uso de async/await com consultas ao banco de dados
 const pool_query = util.promisify(pool.query).bind(pool);
 
+const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic)
 // Função para inserir dados em lote
 const inserirDadosEmLote = async (dados) => {
     let connection;
@@ -27,30 +29,29 @@ const inserirDadosEmLote = async (dados) => {
             });
         });
 
-        const placeholders = dados.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+        const placeholders = dados.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
         const insertQuery = `
             INSERT INTO unica (
                 ufDestinatario, cst, cstipi, unidade, ipient, ipi, ncm,
-                pisDebito, cofinsDebito, cstpis, CodigoProduto, NomeProduto
+                CodigoProduto, NomeProduto
             )
             VALUES ${placeholders}
             ON DUPLICATE KEY UPDATE
-                ufDestinatario = VALUES(ufDestinatario),
-                cst = VALUES(cst),
-                cstipi = VALUES(cstipi),
-                unidade = VALUES(unidade),
-                ipient = VALUES(ipient),
-                ipi = VALUES(ipi),
-                pisDebito = VALUES(pisDebito),
-                cofinsDebito = VALUES(cofinsDebito),
-                cstpis = VALUES(cstpis),
-                CodigoProduto = VALUES(CodigoProduto),
-                NomeProduto = VALUES(NomeProduto);
+                ufDestinatario = COALESCE(VALUES(ufDestinatario), ufDestinatario),
+                cst = COALESCE(VALUES(cst), cst),
+                cstipi = COALESCE(VALUES(cstipi), cstipi),
+                unidade = COALESCE(VALUES(unidade), unidade),
+                ipient = COALESCE(VALUES(ipient), ipient),
+                ipi = COALESCE(VALUES(ipi), ipi),
+                ncm = COALESCE(VALUES(ncm), ncm),
+                CodigoProduto = COALESCE(VALUES(CodigoProduto), CodigoProduto),
+                NomeProduto = COALESCE(VALUES(NomeProduto), NomeProduto);
         `;
 
         const insertValues = dados.flatMap(dado => [
-            dado.ufDestinatario, dado.cst, dado.cstipi, dado.unidade, dado.ipient, dado.ipi,
-            dado.ncm, dado.pisDebito, dado.cofinsDebito, dado.cstpis, dado.codigoProduto, dado.nomeProduto
+            dado.ufDestinatario || null, dado.cst || null, dado.cstipi || null, 
+            dado.unidade || null, dado.ipient || null, dado.ipi || null,
+            dado.ncm || null, dado.codigoProduto || null, dado.nomeProduto || null
         ]);
 
         await new Promise((resolve, reject) => {
@@ -60,15 +61,15 @@ const inserirDadosEmLote = async (dados) => {
             });
         });
 
-        console.log(`Lote de ${dados.length} registros inserido com sucesso!`);
     } catch (err) {
         console.error('Erro ao inserir o lote de dados:', err);
     } finally {
         if (connection) {
-            connection.release(); // Libera a conexão de volta para o pool
+            connection.release();
         }
     }
 };
+
 
 // Função para processar um NCM
 const processaNCM = async (codigoProduto) => {
@@ -104,7 +105,7 @@ const processaNCM = async (codigoProduto) => {
         await inserirDadosEmLote(results);
     }
 
-    console.log(`Processado NCM: ${codigoProduto} com ${results.length} registros.`);
+    // console.log(`Processado NCM: ${codigoProduto} com ${results.length} registros.`);
 };
 
 // Função principal para processar todos os NCMs
@@ -114,12 +115,17 @@ const processaNCMs = async () => {
         const ncmRows = await pool_query('SELECT DISTINCT codigoProduto FROM dadosncm');
         console.log(`Total de NCMs distintos encontrados: ${ncmRows.length}`);
 
-        const batchSize = 10; // Número de NCMs processados em paralelo
+        const batchSize = 100; // Número de NCMs processados em paralelo
         const promises = [];
+
+        progressBar.start(ncmRows.length, 0);
+        let processedCount = 0;
 
         for (const ncmRow of ncmRows) {
             promises.push(processaNCM(ncmRow.codigoProduto));
+            processedCount ++;
 
+            progressBar.update(processedCount);
             // Processa os NCMs em paralelo
             if (promises.length >= batchSize) {
                 await Promise.all(promises);
@@ -131,6 +137,8 @@ const processaNCMs = async () => {
         if (promises.length > 0) {
             await Promise.all(promises);
         }
+
+        progressBar.stop();
 
         console.log('Processamento finalizado.');
     } catch (error) {

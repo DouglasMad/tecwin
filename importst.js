@@ -43,8 +43,8 @@ const inserirProdutosEmLote = async (produtos) => {
         const placeholders = produtos.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
         const insertQuery = `INSERT INTO tec_stcst (codigo, ncm, nmproduto, unidade, cst, uf) VALUES ${placeholders}`;
         const insertValues = produtos.flatMap(produto => [
-            produto.codigo || '',
-            produto.ncm ? produto.ncm.replace(/\./g, '') : '',
+            produto.codigo,
+            produto.ncm,
             produto.nomeProduto || '',
             produto.unidadeMedida || '',
             produto.cst || '',
@@ -55,6 +55,10 @@ const inserirProdutosEmLote = async (produtos) => {
         console.log(`Lote de ${produtos.length} produtos inserido com sucesso!`);
     } catch (err) {
         console.error('Erro ao inserir o lote de produtos:', err);
+        // Logar cada produto com erro
+        for (const produto of produtos) {
+            console.error('Erro no produto:', produto);
+        }
     } finally {
         if (connection) {
             connection.release(); // Libera a conexão de volta para o pool
@@ -67,7 +71,7 @@ const importst = async () => {
     try {
         console.log('Iniciando leitura do arquivo...');
 
-        const data = await fs.readFile('C:\\Users\\Administrador.PLASSER\\Desktop\\tecwin\\docs\\tecwinst.txt', 'utf8');
+        const data = await fs.readFile('C:\\WKRadar\\BI\\Registros\\tecwinst.txt', 'utf8');
         const linhas = data.split('\n');
 
         console.log(`Total de ${linhas.length} linhas encontradas no arquivo.`);
@@ -76,16 +80,20 @@ const importst = async () => {
         let batch = [];
 
         for (const linha of linhas) {
-            const [codigo, ncm, nomeProduto, unidadeMedida, cst, uf] = linha.split('|');
-            if (codigo && ncm && nomeProduto && unidadeMedida && cst && uf) {
-                batch.push({ codigo, ncm, nomeProduto, unidadeMedida, cst, uf });
+            const campos = linha.split('|'); // Mantém a linha sem aplicar trim()
+            if (campos.length === 6) { // Certifica-se de que há exatamente 6 campos
+                const [codigo, ncm, nomeProduto, unidadeMedida, cst, uf] = campos;
 
-                if (batch.length === batchSize) {
-                    await inserirProdutosEmLote(batch); // Insere lote no banco de dados
-                    batch = []; // Reseta o lote
+                if (codigo && ncm && nomeProduto) { // Aceita campos opcionais vazios
+                    batch.push({ codigo, ncm, nomeProduto, unidadeMedida: unidadeMedida || '', cst: cst || '', uf: uf || '' });
+
+                    if (batch.length === batchSize) {
+                        await inserirProdutosEmLote(batch); // Insere lote no banco de dados
+                        batch = []; // Reseta o lote
+                    }
                 }
             } else {
-                console.log(`Linha incompleta ignorada: ${linha}`);
+                console.log(`Linha com formato incorreto ignorada: ${linha}`);
             }
         }
 

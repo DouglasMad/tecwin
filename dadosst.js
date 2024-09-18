@@ -1,5 +1,7 @@
 const mysql = require('mysql2');
 const util = require('util');
+const cliProgress = require("cli-progress")
+
 
 // Criação do pool de conexões
 const pool = mysql.createPool({
@@ -16,13 +18,23 @@ const pool = mysql.createPool({
 // Promisify para habilitar async/await para consultas MySQL
 const poolQuery = util.promisify(pool.query).bind(pool);
 
+const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic)
+
 async function atualizarDadosST() {
     try {
         // Busca os NCMs da tabela tec_produto
         const ncmResultados = await poolQuery('SELECT DISTINCT ncm FROM tec_produto');
+
+        progressBar.start(ncmResultados.length, 0);
+        let processedCount = 0;
         
         for (const row of ncmResultados) {
             const ncm = row.ncm;
+
+            processedCount ++;
+
+            progressBar.update(processedCount);
+
             // Executa a consulta e insere os resultados na tabela dadosst
             const insertQuery = `
                 INSERT INTO dadosst (ufDestinatario, cst, aliquotaDestino, aliquotaInterestadualMI, codigo, nmproduto)
