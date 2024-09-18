@@ -218,13 +218,13 @@ async function exportarDadosParaTXTSync(callback) {
     }
 }
 
-exportarDadosParaTXTSync((error, successMessage) => {
-    if (error) {
-        console.error('Erro ao exportar dados para o arquivo TXT:', error);
-    } else {
-        console.log("Executando gerador de txt", successMessage);
-    }
-});
+// exportarDadosParaTXTSync((error, successMessage) => {
+//     if (error) {
+//         console.error('Erro ao exportar dados para o arquivo TXT:', error);
+//     } else {
+//         console.log("Executando gerador de txt", successMessage);
+//     }
+// });
 
 
 module.exports = {

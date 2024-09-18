@@ -28,7 +28,7 @@ function updateRobel() {
     });
 }
 
- updateRobel();
+ // updateRobel();
 
 module.exports = {
     updateRobel

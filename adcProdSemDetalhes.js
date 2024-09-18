@@ -169,9 +169,9 @@ const preencherProdutosSemDetalhes = async () => {
     }
 };
 
-preencherProdutosSemDetalhes().catch(err => {
-    console.error('Erro ao preencher produtos sem detalhes:', err);
-});
+// preencherProdutosSemDetalhes().catch(err => {
+//     console.error('Erro ao preencher produtos sem detalhes:', err);
+// });
 
 module.exports = {
     preencherProdutosSemDetalhes

@@ -113,7 +113,7 @@ async function processarNCM(connection, ncm) {
 }
 
 // Executar manualmente
-processarTodosNCMs();
+// processarTodosNCMs();
 
 module.exports = {
     processarTodosNCMs

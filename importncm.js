@@ -204,7 +204,7 @@ const lerArquivo = async () => {
     }
 };
 
- lerArquivo() // Adicionado para executar a função diretamente
+ // lerArquivo() // Adicionado para executar a função diretamente
 
 module.exports = {
     lerArquivo,

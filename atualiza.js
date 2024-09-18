@@ -148,7 +148,7 @@ const processaNCMs = async () => {
     }
 };
 
-processaNCMs();
+// processaNCMs();
 
 module.exports = {
     processaNCMs

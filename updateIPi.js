@@ -58,7 +58,7 @@ function updateIpi() {
 
 }
 
-updateIpi();
+// updateIpi();
 console.log("Terminado")
 
 module.exports = {
