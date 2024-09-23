@@ -71,7 +71,7 @@ const importst = async () => {
     try {
         console.log('Iniciando leitura do arquivo...');
 
-        const data = await fs.readFile('C:\\WKRadar\\BI\\Registros\\tecwinst.txt', 'utf8');
+        const data = await fs.readFile('C:\\Srvad\\netlogon\\db_BI\\Tecwin\\tecwinst.txt', 'utf8');
         const linhas = data.split('\n');
 
         console.log(`Total de ${linhas.length} linhas encontradas no arquivo.`);

@@ -33,7 +33,7 @@ const getConnectionFromPool = () => {
 async function gerarLog(arquivoTxt, tamanhoTxt, callback) {
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const directoryPath = 'C:/Users/Administrador.PLASSER/Desktop/tecwin/exports';
+    const directoryPath = '\\Srvad\\netlogon\\db_BI\\Tecwin\\Retorno';
 
     if (!fs.existsSync(directoryPath)){
         fs.mkdirSync(directoryPath);
@@ -68,13 +68,13 @@ async function consultarInformacoesUnica(connection) {
 async function exportarDadosParaTXTSync(callback) {
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().slice(0, 10); // Formata a data como YYYY-MM-DD
-    const directoryPath = 'C:/Users/Administrador.PLASSER/Desktop/tecwin/exports';
+    const directoryPath = '\\Srvad\\netlogon\\db_BI\\Tecwin\\Retorno';
 
     if (!fs.existsSync(directoryPath)) {
         fs.mkdirSync(directoryPath);
     }
 
-    const fileName = path.join(directoryPath, `dadosUnica_${formattedDate}.txt`);
+    const fileName = path.join(directoryPath, "retorno.txt");
     let fileContent = '';
 
     let connection;
@@ -218,13 +218,13 @@ async function exportarDadosParaTXTSync(callback) {
     }
 }
 
-// exportarDadosParaTXTSync((error, successMessage) => {
-//     if (error) {
-//         console.error('Erro ao exportar dados para o arquivo TXT:', error);
-//     } else {
-//         console.log("Executando gerador de txt", successMessage);
-//     }
-// });
+exportarDadosParaTXTSync((error, successMessage) => {
+    if (error) {
+        console.error('Erro ao exportar dados para o arquivo TXT:', error);
+    } else {
+        console.log("Executando gerador de txt", successMessage);
+    }
+});
 
 
 module.exports = {
